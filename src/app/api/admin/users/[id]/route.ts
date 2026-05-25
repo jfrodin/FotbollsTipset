@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { requireAdmin } from "@/lib/auth/session";
+import { requireAdmin, getSession } from "@/lib/auth/session";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -43,4 +43,29 @@ export async function PATCH(
     }
     return NextResponse.json({ error: "Serverfel" }, { status: 500 });
   }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    await requireAdmin();
+  } catch {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const session = await getSession();
+  const { id } = await params;
+
+  if (session?.id === id) {
+    return NextResponse.json({ error: "Du kan inte ta bort dig själv" }, { status: 400 });
+  }
+
+  const [deleted] = await db.delete(users).where(eq(users.id, id)).returning();
+  if (!deleted) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ ok: true });
 }

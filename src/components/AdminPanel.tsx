@@ -45,6 +45,7 @@ export function AdminPanel({ tournaments, users, syncLogs }: Props) {
   const [tab, setTab] = useState<Tab>("tournaments");
   const [syncing, setSyncing] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [deletingUser, setDeletingUser] = useState<string | null>(null);
 
   async function triggerSync(tournamentId: string) {
     setSyncing(tournamentId);
@@ -84,6 +85,14 @@ export function AdminPanel({ tournaments, users, syncLogs }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role }),
     });
+    router.refresh();
+  }
+
+  async function deleteUser(id: string, name: string) {
+    if (!confirm(`Ta bort ${name}? Detta går inte att ångra.`)) return;
+    setDeletingUser(id);
+    await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
+    setDeletingUser(null);
     router.refresh();
   }
 
@@ -169,6 +178,7 @@ export function AdminPanel({ tournaments, users, syncLogs }: Props) {
                 <th className="text-left px-4 py-3 hidden sm:table-cell">E-post</th>
                 <th className="text-left px-4 py-3">Roll</th>
                 <th className="text-left px-4 py-3 hidden md:table-cell">Registrerad</th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -188,6 +198,15 @@ export function AdminPanel({ tournaments, users, syncLogs }: Props) {
                   </td>
                   <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">
                     {new Date(u.createdAt).toLocaleDateString("sv-SE")}
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => deleteUser(u.id, u.displayName)}
+                      disabled={deletingUser === u.id}
+                      className="text-xs text-red-500 hover:text-red-700 disabled:opacity-40"
+                    >
+                      Ta bort
+                    </button>
                   </td>
                 </tr>
               ))}
