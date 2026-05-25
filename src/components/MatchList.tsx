@@ -5,8 +5,8 @@ import { PredictionInput } from "./PredictionInput";
 interface Match {
   id: string;
   tournamentId: string;
-  homeTeam: { name: string; shortName: string | null; logoUrl: string | null } | null;
-  awayTeam: { name: string; shortName: string | null; logoUrl: string | null } | null;
+  homeTeam: { name: string; shortName: string | null; logoUrl: string | null; countryCode: string | null } | null;
+  awayTeam: { name: string; shortName: string | null; logoUrl: string | null; countryCode: string | null } | null;
   startsAt: string;
   status: string;
   homeScore: number | null;

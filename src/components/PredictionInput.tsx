@@ -5,8 +5,8 @@ import { useState, useOptimistic, useTransition } from "react";
 interface Match {
   id: string;
   tournamentId: string;
-  homeTeam: { name: string; shortName: string | null; logoUrl: string | null } | null;
-  awayTeam: { name: string; shortName: string | null; logoUrl: string | null } | null;
+  homeTeam: { name: string; shortName: string | null; logoUrl: string | null; countryCode: string | null } | null;
+  awayTeam: { name: string; shortName: string | null; logoUrl: string | null; countryCode: string | null } | null;
   startsAt: string;
   status: string;
   homeScore: number | null;
@@ -64,6 +64,15 @@ function formatTime(iso: string): string {
   });
 }
 
+function countryFlag(code: string | null): string {
+  if (!code) return "";
+  if (code === "GB-ENG") return "🏴󠁧󠁢󠁥󠁮󠁧󠁿";
+  if (code === "GB-SCT") return "🏴󠁧󠁢󠁳󠁣󠁴󠁿";
+  return [...code.toUpperCase()].map((c) =>
+    String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)
+  ).join("");
+}
+
 function matchIsLocked(match: Match): boolean {
   return (
     new Date() >= new Date(match.startsAt) ||
@@ -119,8 +128,10 @@ export function PredictionInput({ match }: PredictionInputProps) {
     }
   }
 
-  const homeName = match.homeTeam?.shortName ?? match.homeTeam?.name ?? "?";
-  const awayName = match.awayTeam?.shortName ?? match.awayTeam?.name ?? "?";
+  const homeName = match.homeTeam?.name ?? "?";
+  const awayName = match.awayTeam?.name ?? "?";
+  const homeFlag = countryFlag(match.homeTeam?.countryCode ?? null);
+  const awayFlag = countryFlag(match.awayTeam?.countryCode ?? null);
 
   const changed =
     match.userPrediction?.predictedHomeScore !== homeScore ||
@@ -141,10 +152,8 @@ export function PredictionInput({ match }: PredictionInputProps) {
       <div className="flex items-center gap-3">
         {/* Home team */}
         <div className="flex-1 text-right">
-          {match.homeTeam?.logoUrl && (
-            <img src={match.homeTeam.logoUrl} alt="" className="w-6 h-6 inline-block mr-1" />
-          )}
           <span className="font-semibold text-sm">{homeName}</span>
+          {homeFlag && <span className="ml-1.5 text-lg leading-none">{homeFlag}</span>}
         </div>
 
         {/* Score / prediction */}
@@ -182,10 +191,8 @@ export function PredictionInput({ match }: PredictionInputProps) {
 
         {/* Away team */}
         <div className="flex-1">
+          {awayFlag && <span className="mr-1.5 text-lg leading-none">{awayFlag}</span>}
           <span className="font-semibold text-sm">{awayName}</span>
-          {match.awayTeam?.logoUrl && (
-            <img src={match.awayTeam.logoUrl} alt="" className="w-6 h-6 inline-block ml-1" />
-          )}
         </div>
       </div>
 
