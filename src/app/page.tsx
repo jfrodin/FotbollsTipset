@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/db";
-import { tournaments, matches, predictions, teams, users } from "@/db/schema";
+import { tournaments, matches, predictions, teams, users, phases } from "@/db/schema";
 import { eq, and, asc, gte, sum, sql } from "drizzle-orm";
 import { Navbar } from "@/components/Navbar";
 import Link from "next/link";
@@ -47,6 +47,7 @@ export default async function HomePage() {
   };
   let upcomingMatches: UpcomingMatch[] = [];
   let pendingCount = 0;
+  let hasKnockout = false;
 
   if (tournament) {
     const topRows = await db
@@ -99,25 +100,38 @@ export default async function HomePage() {
       const tipped = new Set(userPreds.map((p) => p.matchId));
       pendingCount = soon.filter((m) => !tipped.has(m.id)).length;
     }
+
+    const [knockoutPhase] = await db
+      .select({ id: phases.id })
+      .from(phases)
+      .where(and(eq(phases.tournamentId, tournament.id), eq(phases.type, "knockout")))
+      .limit(1);
+    hasKnockout = !!knockoutPhase;
   }
 
   return (
     <>
       <Navbar user={session} />
-      <main className="max-w-4xl mx-auto px-4 py-8 flex-1 w-full">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Hej, {session.displayName}!</h1>
-          {tournament ? (
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
-              {tournament.name} {tournament.year}
-            </p>
-          ) : (
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
-              Ingen aktiv turnering just nu.
-            </p>
+      <div className="bg-gradient-to-br from-green-700 via-green-600 to-emerald-500 text-white">
+        <div className="max-w-4xl mx-auto px-4 py-10">
+          <p className="text-green-200 text-sm font-medium uppercase tracking-widest mb-1">
+            {tournament ? `${tournament.name} ${tournament.year}` : "FotbollsTipset"}
+          </p>
+          <h1 className="font-[family-name:var(--font-bebas)] text-5xl sm:text-6xl tracking-wide leading-none">
+            Hej, {session.displayName}!
+          </h1>
+          {!tournament && (
+            <p className="text-green-200 mt-2 text-sm">Ingen aktiv turnering just nu.</p>
           )}
+          <div className="flex flex-wrap gap-4 mt-5 text-sm text-green-100">
+            <span className="flex items-center gap-1.5"><span className="text-base">⚽</span> Rätt utfall = 2p</span>
+            <span className="flex items-center gap-1.5"><span className="text-base">🎯</span> Exakt resultat = 5p</span>
+            <span className="flex items-center gap-1.5"><span className="text-base">🔒</span> Stänger vid matchstart</span>
+          </div>
         </div>
+      </div>
 
+      <main className="max-w-4xl mx-auto px-4 py-8 flex-1 w-full">
         {tournament && (
           <>
             {pendingCount > 0 && (
@@ -146,16 +160,24 @@ export default async function HomePage() {
                 <div className="text-sm text-gray-500 mt-0.5">Tippa matcherna</div>
               </Link>
 
-              <Link
-                href={`/tournament/${tournament.id}/knockout`}
-                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:border-green-400 dark:hover:border-green-600 transition-colors group"
-              >
-                <div className="text-3xl mb-2">🏆</div>
-                <div className="font-semibold group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
-                  Slutspel
+              {hasKnockout ? (
+                <Link
+                  href={`/tournament/${tournament.id}/knockout`}
+                  className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:border-green-400 dark:hover:border-green-600 transition-colors group"
+                >
+                  <div className="text-3xl mb-2">🏆</div>
+                  <div className="font-semibold group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+                    Slutspel
+                  </div>
+                  <div className="text-sm text-gray-500 mt-0.5">Tippa slutspelet</div>
+                </Link>
+              ) : (
+                <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-xl p-5 opacity-50 cursor-not-allowed">
+                  <div className="text-3xl mb-2">🔒</div>
+                  <div className="font-semibold text-gray-400">Slutspel</div>
+                  <div className="text-sm text-gray-400 mt-0.5">Låses upp efter gruppspelet</div>
                 </div>
-                <div className="text-sm text-gray-500 mt-0.5">Tippa slutspelet</div>
-              </Link>
+              )}
 
               <Link
                 href={`/tournament/${tournament.id}/leaderboard`}
@@ -220,13 +242,13 @@ export default async function HomePage() {
                       </span>
                       <span className="flex-1 flex items-center justify-center gap-2 font-medium">
                         <span className="flex items-center gap-1.5">
-                          {countryFlag(m.homeTeam?.countryCode ?? null)}
+                          <span className="text-2xl leading-none">{countryFlag(m.homeTeam?.countryCode ?? null)}</span>
                           {m.homeTeam?.name ?? "–"}
                         </span>
                         <span className="text-gray-400 font-normal">vs</span>
                         <span className="flex items-center gap-1.5">
                           {m.awayTeam?.name ?? "–"}
-                          {countryFlag(m.awayTeam?.countryCode ?? null)}
+                          <span className="text-2xl leading-none">{countryFlag(m.awayTeam?.countryCode ?? null)}</span>
                         </span>
                       </span>
                       <span className="text-gray-400 text-xs w-12 text-right shrink-0">{m.groupName?.replace("Grupp ", "Gr ") ?? ""}</span>

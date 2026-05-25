@@ -22,8 +22,11 @@ export function Navbar({ user }: NavbarProps) {
   return (
     <nav className="sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800 bg-white/90 dark:bg-gray-950/90 backdrop-blur">
       <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
-        <Link href="/" className="font-bold text-lg text-green-600 dark:text-green-400">
-          ⚽ FotbollsTipset
+        <Link href="/" className="flex items-center gap-2">
+          <span className="text-green-600 dark:text-green-400 text-xl leading-none">⚽</span>
+          <span className="font-[family-name:var(--font-bebas)] text-2xl tracking-wide text-gray-900 dark:text-white leading-none">
+            FotbollsTipset
+          </span>
         </Link>
 
         <div className="flex items-center gap-3 text-sm">

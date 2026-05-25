@@ -3,8 +3,8 @@ import { redirect } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
 import Link from "next/link";
 import { db } from "@/db";
-import { phases, tournaments } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { phases, tournaments, predictions, users, matches } from "@/db/schema";
+import { eq, and, sum, count, sql } from "drizzle-orm";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -22,15 +22,51 @@ interface LeaderboardEntry {
 }
 
 async function getLeaderboard(tournamentId: string, phaseId?: string): Promise<LeaderboardEntry[]> {
-  const url = new URL(
-    `/api/leaderboard/${tournamentId}`,
-    process.env.APP_URL ?? "http://localhost:3000"
-  );
-  if (phaseId) url.searchParams.set("phaseId", phaseId);
+  const conditions = [eq(predictions.tournamentId, tournamentId)];
 
-  const res = await fetch(url.toString(), { cache: "no-store" });
-  if (!res.ok) return [];
-  return res.json();
+  if (phaseId) {
+    const phaseMatchIds = await db
+      .select({ id: matches.id })
+      .from(matches)
+      .where(and(eq(matches.phaseId, phaseId), eq(matches.tournamentId, tournamentId)));
+
+    const ids = phaseMatchIds.map((m) => m.id);
+    if (ids.length === 0) return [];
+
+    conditions.push(sql`${predictions.matchId} = ANY(ARRAY[${sql.join(ids.map((id) => sql`${id}`), sql`, `)}]::text[])`);
+  }
+
+  const rows = await db
+    .select({
+      userId: predictions.userId,
+      displayName: users.displayName,
+      totalPoints: sum(predictions.points).mapWith(Number),
+      exactScores: count(sql`CASE WHEN ${predictions.isExactScore} = true THEN 1 END`).mapWith(Number),
+      correctOutcomes: count(sql`CASE WHEN ${predictions.isCorrectOutcome} = true THEN 1 END`).mapWith(Number),
+      predictionsCount: count(predictions.id).mapWith(Number),
+    })
+    .from(predictions)
+    .innerJoin(users, eq(predictions.userId, users.id))
+    .where(and(...conditions))
+    .groupBy(predictions.userId, users.displayName);
+
+  const sorted = rows.sort((a, b) => {
+    if ((b.totalPoints ?? 0) !== (a.totalPoints ?? 0)) return (b.totalPoints ?? 0) - (a.totalPoints ?? 0);
+    if (b.exactScores !== a.exactScores) return b.exactScores - a.exactScores;
+    if (b.correctOutcomes !== a.correctOutcomes) return b.correctOutcomes - a.correctOutcomes;
+    if (a.predictionsCount !== b.predictionsCount) return a.predictionsCount - b.predictionsCount;
+    return a.displayName.localeCompare(b.displayName);
+  });
+
+  return sorted.map((row, idx) => ({
+    rank: idx + 1,
+    userId: row.userId,
+    displayName: row.displayName,
+    totalPoints: row.totalPoints ?? 0,
+    exactScores: row.exactScores,
+    correctOutcomes: row.correctOutcomes,
+    predictionsCount: row.predictionsCount,
+  }));
 }
 
 export default async function LeaderboardPage({ params, searchParams }: Props) {
@@ -118,10 +154,10 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
               <tr>
                 <th className="text-left px-4 py-3 w-12">#</th>
                 <th className="text-left px-4 py-3">Namn</th>
+                <th className="text-right px-4 py-3 hidden md:table-cell">Tippade</th>
+                <th className="text-right px-4 py-3 hidden sm:table-cell">Rätt utfall</th>
+                <th className="text-right px-4 py-3 hidden sm:table-cell">Exakt resultat</th>
                 <th className="text-right px-4 py-3">Poäng</th>
-                <th className="text-right px-4 py-3 hidden sm:table-cell">Exakt</th>
-                <th className="text-right px-4 py-3 hidden sm:table-cell">Rätt</th>
-                <th className="text-right px-4 py-3 hidden md:table-cell">Tips</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -150,22 +186,25 @@ export default async function LeaderboardPage({ params, searchParams }: Props) {
                         <span className="ml-2 text-xs text-gray-400">(du)</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right font-bold">{entry.totalPoints}</td>
-                    <td className="px-4 py-3 text-right text-gray-500 hidden sm:table-cell">
-                      {entry.exactScores}
+                    <td className="px-4 py-3 text-right text-gray-500 hidden md:table-cell">
+                      {entry.predictionsCount}
                     </td>
                     <td className="px-4 py-3 text-right text-gray-500 hidden sm:table-cell">
                       {entry.correctOutcomes}
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-500 hidden md:table-cell">
-                      {entry.predictionsCount}
+                    <td className="px-4 py-3 text-right text-gray-500 hidden sm:table-cell">
+                      {entry.exactScores}
                     </td>
+                    <td className="px-4 py-3 text-right font-bold">{entry.totalPoints}</td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
+        <p className="text-xs text-gray-400 mt-3">
+          Vid lika poäng avgörs placeringen av flest exakta resultat, sedan flest rätt utfall, sedan färst tippade matcher.
+        </p>
       </main>
     </>
   );

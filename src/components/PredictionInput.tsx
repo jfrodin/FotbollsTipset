@@ -151,8 +151,8 @@ export function PredictionInput({ match }: PredictionInputProps) {
 
       <div className="flex items-center gap-3">
         {/* Home team */}
-        <div className="flex-1 flex items-center justify-end gap-3">
-          {homeFlag && <span className="text-2xl leading-none">{homeFlag}</span>}
+        <div className="flex-1 flex items-center justify-end gap-2">
+          {homeFlag && <span className="text-3xl leading-none">{homeFlag}</span>}
           <span className="font-semibold text-sm">{homeName}</span>
         </div>
 
@@ -190,9 +190,9 @@ export function PredictionInput({ match }: PredictionInputProps) {
         </div>
 
         {/* Away team */}
-        <div className="flex-1 flex items-center gap-3">
+        <div className="flex-1 flex items-center gap-2">
           <span className="font-semibold text-sm">{awayName}</span>
-          {awayFlag && <span className="text-2xl leading-none">{awayFlag}</span>}
+          {awayFlag && <span className="text-3xl leading-none">{awayFlag}</span>}
         </div>
       </div>
 

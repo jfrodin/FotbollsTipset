@@ -76,9 +76,9 @@ export default async function KnockoutPage({ params }: Props) {
 
         {matches.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
-            <div className="text-4xl mb-3">🏆</div>
-            <p className="font-medium text-gray-600 dark:text-gray-300">Slutspelet är inte startat än.</p>
-            <p className="text-sm mt-1">Matcherna visas här när de är kända.</p>
+            <div className="text-4xl mb-3">🔒</div>
+            <p className="font-medium text-gray-600 dark:text-gray-300">Slutspelet är inte tillgängligt än.</p>
+            <p className="text-sm mt-1">Låses upp när gruppspelet är klart och slutspelsträdet är satt.</p>
           </div>
         ) : (
           <MatchList matches={matches as unknown as Parameters<typeof MatchList>[0]["matches"]} />
