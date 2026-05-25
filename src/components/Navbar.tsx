@@ -26,30 +26,32 @@ export function Navbar({ user }: NavbarProps) {
           ⚽ FotbollsTipset
         </Link>
 
-        <div className="flex items-center gap-4 text-sm">
-          <Link href="/" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-            Hem
-          </Link>
-          {user?.role === "admin" && (
-            <Link href="/admin" className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-              Admin
-            </Link>
-          )}
+        <div className="flex items-center gap-3 text-sm">
           {user ? (
-            <div className="flex items-center gap-3">
-              <span className="text-gray-500 dark:text-gray-400 hidden sm:block">{user.displayName}</span>
+            <>
+              {user.role === "admin" && (
+                <Link
+                  href="/admin"
+                  className="px-3 py-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Admin
+                </Link>
+              )}
+              <span className="text-gray-500 dark:text-gray-400 font-medium hidden sm:block">
+                {user.displayName}
+              </span>
               <button
                 onClick={handleLogout}
                 disabled={loading}
-                className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm transition-colors"
+                className="px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
               >
                 Logga ut
               </button>
-            </div>
+            </>
           ) : (
             <Link
               href="/login"
-              className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white transition-colors"
             >
               Logga in
             </Link>
