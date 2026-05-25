@@ -30,7 +30,7 @@ async function getGroupMatches(tournamentId: string, userId?: string) {
     .from(matches)
     .leftJoin(phases, eq(matches.phaseId, phases.id))
     .where(and(eq(matches.tournamentId, tournamentId), eq(phases.type, "group")))
-    .orderBy(asc(matches.startsAt));
+    .orderBy(asc(matches.startsAt), asc(matches.groupName));
 
   const allTeams = await db.select().from(teams);
   const teamMap = new Map(allTeams.map((t) => [t.id, t]));
