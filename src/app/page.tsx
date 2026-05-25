@@ -25,6 +25,7 @@ async function getActiveTournament() {
 export default async function HomePage() {
   const session = await getSession();
   if (!session) redirect("/login");
+  if (!session.profileComplete) redirect("/setup");
 
   const tournament = await getActiveTournament();
 

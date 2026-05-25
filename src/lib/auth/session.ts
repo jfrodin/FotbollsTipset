@@ -13,6 +13,7 @@ export interface SessionUser {
   email: string;
   displayName: string;
   role: "player" | "admin";
+  profileComplete: boolean;
 }
 
 export async function createSession(userId: string): Promise<string> {
@@ -55,6 +56,7 @@ export async function getSession(): Promise<SessionUser | null> {
       email: users.email,
       displayName: users.displayName,
       role: users.role,
+      profileComplete: users.profileComplete,
     })
     .from(sessions)
     .innerJoin(users, eq(sessions.userId, users.id))

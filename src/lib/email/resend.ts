@@ -1,16 +1,21 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = process.env.FROM_EMAIL ?? "noreply@speltorsk.madnuss.com";
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
 export async function sendLoginCode(email: string, code: string) {
-  if (!process.env.RESEND_API_KEY) {
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
     console.log(`\n🔑 Inloggningskod för ${email}: ${code}\n`);
     return;
   }
 
-  await resend.emails.send({
-    from: FROM,
+  await transporter.sendMail({
+    from: `FotbollsTipset <${process.env.GMAIL_USER}>`,
     to: email,
     subject: `${code} – din inloggningskod`,
     html: `

@@ -4,7 +4,7 @@ import { jwtVerify } from "jose";
 const SECRET = new TextEncoder().encode(process.env.AUTH_SECRET!);
 const COOKIE_NAME = "ft_session";
 
-const PUBLIC = ["/login", "/api/auth/send-code", "/api/auth/verify-code", "/api/cron"];
+const PUBLIC = ["/login", "/setup", "/api/auth/send-code", "/api/auth/verify-code", "/api/user/profile", "/api/cron"];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
