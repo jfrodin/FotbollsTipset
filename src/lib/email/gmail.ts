@@ -8,6 +8,29 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+export async function sendReminderEmail(email: string, name: string, matchCount: number) {
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    console.log(`📧 Påminnelse till ${email}: ${matchCount} match(er) kvar att tippa`);
+    return;
+  }
+
+  await transporter.sendMail({
+    from: `FotbollsTipset <${process.env.GMAIL_USER}>`,
+    to: email,
+    subject: `⚽ Glöm inte tippa – ${matchCount} match${matchCount !== 1 ? "er" : ""} börjar snart!`,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px">
+        <h2 style="margin:0 0 8px">⚽ FotbollsTipset</h2>
+        <p>Hej ${name}!</p>
+        <p>Du har <strong>${matchCount} match${matchCount !== 1 ? "er" : ""}</strong> att tippa som startar inom 2 timmar.</p>
+        <a href="${process.env.APP_URL}" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#16a34a;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold">
+          Tippa nu →
+        </a>
+        <p style="color:#999;font-size:14px;margin-top:24px">Du kan inte tippa efter att matchen startat.</p>
+      </div>`,
+  });
+}
+
 export async function sendLoginCode(email: string, code: string) {
   if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
     console.log(`\n🔑 Inloggningskod för ${email}: ${code}\n`);

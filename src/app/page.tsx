@@ -1,7 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/db";
-import { tournaments, matches, predictions, teams } from "@/db/schema";
-import { eq, and, asc, gte } from "drizzle-orm";
+import { tournaments, matches, predictions, teams, users } from "@/db/schema";
+import { eq, and, asc, gte, sum, sql } from "drizzle-orm";
 import { Navbar } from "@/components/Navbar";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -38,6 +38,9 @@ export default async function HomePage() {
 
   const tournament = await getActiveTournament();
 
+  type LeaderboardEntry = { userId: string; displayName: string; points: number; rank: number };
+  let leaderboard: LeaderboardEntry[] = [];
+
   type UpcomingMatch = typeof matches.$inferSelect & {
     homeTeam: { name: string; countryCode: string | null } | null;
     awayTeam: { name: string; countryCode: string | null } | null;
@@ -46,6 +49,26 @@ export default async function HomePage() {
   let pendingCount = 0;
 
   if (tournament) {
+    const topRows = await db
+      .select({
+        userId: predictions.userId,
+        displayName: users.displayName,
+        points: sum(predictions.points).mapWith(Number),
+      })
+      .from(predictions)
+      .innerJoin(users, eq(predictions.userId, users.id))
+      .where(eq(predictions.tournamentId, tournament.id))
+      .groupBy(predictions.userId, users.displayName)
+      .orderBy(sql`sum(${predictions.points}) desc nulls last`)
+      .limit(5);
+
+    leaderboard = topRows.map((r, i) => ({
+      userId: r.userId,
+      displayName: r.displayName,
+      points: r.points ?? 0,
+      rank: i + 1,
+    }));
+
     const now = new Date();
     const rows = await db
       .select()
@@ -145,6 +168,31 @@ export default async function HomePage() {
                 <div className="text-sm text-gray-500 mt-0.5">Se ställningen</div>
               </Link>
             </div>
+
+            {leaderboard.length > 0 && (
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-lg font-semibold">Topplista</h2>
+                  <Link href={`/tournament/${tournament.id}/leaderboard`} className="text-sm text-green-600 dark:text-green-400 hover:underline">
+                    Visa alla →
+                  </Link>
+                </div>
+                <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+                  {leaderboard.map((entry, i) => (
+                    <div
+                      key={entry.userId}
+                      className={`flex items-center gap-3 px-4 py-3 text-sm ${i < leaderboard.length - 1 ? "border-b border-gray-100 dark:border-gray-800" : ""} ${entry.userId === session.id ? "bg-green-50 dark:bg-green-950/20" : ""}`}
+                    >
+                      <span className={`w-6 text-center font-bold ${entry.rank === 1 ? "text-yellow-500" : entry.rank === 2 ? "text-gray-400" : entry.rank === 3 ? "text-amber-600" : "text-gray-400"}`}>
+                        {entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : entry.rank === 3 ? "🥉" : entry.rank}
+                      </span>
+                      <span className="flex-1 font-medium">{entry.displayName}{entry.userId === session.id && <span className="ml-1.5 text-xs text-gray-400">(du)</span>}</span>
+                      <span className="font-bold text-green-600 dark:text-green-400">{entry.points} p</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {upcomingMatches.length > 0 && (
               <div>
