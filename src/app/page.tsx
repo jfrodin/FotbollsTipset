@@ -1,10 +1,19 @@
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/db";
-import { tournaments, matches, predictions } from "@/db/schema";
+import { tournaments, matches, predictions, teams } from "@/db/schema";
 import { eq, and, asc, gte } from "drizzle-orm";
 import { Navbar } from "@/components/Navbar";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+
+function countryFlag(code: string | null): string {
+  if (!code) return "";
+  if (code === "GB-ENG") return "🏴󠁧󠁢󠁥󠁮󠁧󠁿";
+  if (code === "GB-SCT") return "🏴󠁧󠁢󠁳󠁣󠁴󠁿";
+  return [...code.toUpperCase()].map((c) =>
+    String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)
+  ).join("");
+}
 
 async function getActiveTournament() {
   const [active] = await db
@@ -29,17 +38,32 @@ export default async function HomePage() {
 
   const tournament = await getActiveTournament();
 
-  let upcomingMatches: (typeof matches.$inferSelect)[] = [];
+  type UpcomingMatch = typeof matches.$inferSelect & {
+    homeTeam: { name: string; countryCode: string | null } | null;
+    awayTeam: { name: string; countryCode: string | null } | null;
+  };
+  let upcomingMatches: UpcomingMatch[] = [];
   let pendingCount = 0;
 
   if (tournament) {
     const now = new Date();
-    upcomingMatches = await db
+    const homeTeam = db.$with("ht").as(db.select().from(teams));
+    const rows = await db
       .select()
       .from(matches)
       .where(and(eq(matches.tournamentId, tournament.id), gte(matches.startsAt, now)))
       .orderBy(asc(matches.startsAt))
       .limit(5);
+
+    const allTeams = await db.select().from(teams);
+    const teamMap = new Map(allTeams.map((t) => [t.id, t]));
+    void homeTeam;
+
+    upcomingMatches = rows.map((m) => ({
+      ...m,
+      homeTeam: m.homeTeamId ? (teamMap.get(m.homeTeamId) ?? null) : null,
+      awayTeam: m.awayTeamId ? (teamMap.get(m.awayTeamId) ?? null) : null,
+    }));
 
     const soon = upcomingMatches.filter(
       (m) => new Date(m.startsAt) <= new Date(Date.now() + 48 * 60 * 60 * 1000)
@@ -129,26 +153,38 @@ export default async function HomePage() {
                 <h2 className="text-lg font-semibold mb-3">Kommande matcher</h2>
                 <div className="space-y-2">
                   {upcomingMatches.map((m) => (
-                    <div
+                    <Link
                       key={m.id}
-                      className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-3 flex items-center justify-between text-sm"
+                      href={`/tournament/${tournament.id}/group`}
+                      className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl px-4 py-3 flex items-center gap-3 text-sm hover:border-green-300 dark:hover:border-green-700 transition-colors"
                     >
-                      <span className="text-gray-600 dark:text-gray-300">
+                      <span className="text-gray-400 text-xs w-20 shrink-0">
                         {new Date(m.startsAt).toLocaleDateString("sv-SE", {
                           weekday: "short",
                           day: "numeric",
                           month: "short",
                           timeZone: "Europe/Stockholm",
                         })}
-                        {" · "}
+                        {" "}
                         {new Date(m.startsAt).toLocaleTimeString("sv-SE", {
                           hour: "2-digit",
                           minute: "2-digit",
                           timeZone: "Europe/Stockholm",
                         })}
                       </span>
-                      <span className="text-gray-400 text-xs">{m.roundName ?? ""}</span>
-                    </div>
+                      <span className="flex-1 flex items-center justify-center gap-2 font-medium">
+                        <span className="flex items-center gap-1.5">
+                          {countryFlag(m.homeTeam?.countryCode ?? null)}
+                          {m.homeTeam?.name ?? "–"}
+                        </span>
+                        <span className="text-gray-400 font-normal">vs</span>
+                        <span className="flex items-center gap-1.5">
+                          {m.awayTeam?.name ?? "–"}
+                          {countryFlag(m.awayTeam?.countryCode ?? null)}
+                        </span>
+                      </span>
+                      <span className="text-gray-400 text-xs w-12 text-right shrink-0">{m.groupName?.replace("Grupp ", "Gr ") ?? ""}</span>
+                    </Link>
                   ))}
                 </div>
               </div>
