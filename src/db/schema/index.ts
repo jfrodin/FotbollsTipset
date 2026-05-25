@@ -55,21 +55,26 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (t) => [uniqueIndex("users_email_idx").on(t.email)]);
 
-// ─── NextAuth Accounts (Azure AD OAuth tokens) ────────────────────────────────
+// ─── Sessions ─────────────────────────────────────────────────────────────────
 
-export const accounts = pgTable("accounts", {
+export const sessions = pgTable("sessions", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  type: text("type").notNull(),
-  provider: text("provider").notNull(),
-  providerAccountId: text("provider_account_id").notNull(),
-  refreshToken: text("refresh_token"),
-  accessToken: text("access_token"),
-  expiresAt: integer("expires_at"),
-  tokenType: text("token_type"),
-  scope: text("scope"),
-  idToken: text("id_token"),
-  sessionState: text("session_state"),
-}, (t) => [uniqueIndex("accounts_provider_account_idx").on(t.provider, t.providerAccountId)]);
+  token: text("token").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => [uniqueIndex("sessions_token_idx").on(t.token)]);
+
+// ─── Auth Codes (OTP) ─────────────────────────────────────────────────────────
+
+export const authCodes = pgTable("auth_codes", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  email: text("email").notNull(),
+  code: text("code").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => [index("auth_codes_email_idx").on(t.email)]);
 
 // ─── Tournaments ──────────────────────────────────────────────────────────────
 
@@ -187,12 +192,8 @@ export const syncLogs = pgTable("sync_logs", {
 // ─── Relations ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
-  accounts: many(accounts),
+  sessions: many(sessions),
   predictions: many(predictions),
-}));
-
-export const accountsRelations = relations(accounts, ({ one }) => ({
-  user: one(users, { fields: [accounts.userId], references: [users.id] }),
 }));
 
 export const tournamentsRelations = relations(tournaments, ({ many }) => ({
