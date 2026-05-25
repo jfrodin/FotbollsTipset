@@ -29,17 +29,17 @@ export function Navbar({ user }: NavbarProps) {
         <div className="flex items-center gap-3 text-sm">
           {user ? (
             <>
+              <span className="text-gray-700 dark:text-gray-300 font-medium">
+                {user.displayName}
+              </span>
               {user.role === "admin" && (
                 <Link
                   href="/admin"
-                  className="px-3 py-1.5 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="px-3 py-1.5 rounded-lg text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
-                  Admin
+                  ⚙️ Admin
                 </Link>
               )}
-              <span className="text-gray-500 dark:text-gray-400 font-medium hidden sm:block">
-                {user.displayName}
-              </span>
               <button
                 onClick={handleLogout}
                 disabled={loading}
