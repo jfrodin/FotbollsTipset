@@ -1,0 +1,28 @@
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/db";
+import { tournaments } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { syncTournament } from "@/lib/sync";
+
+export async function GET(req: NextRequest) {
+  const secret = req.headers.get("x-cron-secret");
+  if (secret !== process.env.CRON_SECRET) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const activeTournaments = await db
+    .select()
+    .from(tournaments)
+    .where(eq(tournaments.status, "active"));
+
+  const results = await Promise.allSettled(
+    activeTournaments.map((t) => syncTournament(t.id))
+  );
+
+  return NextResponse.json({
+    synced: activeTournaments.length,
+    results: results.map((r) =>
+      r.status === "fulfilled" ? r.value : { error: String(r.reason) }
+    ),
+  });
+}
