@@ -47,7 +47,6 @@ export default async function HomePage() {
 
   if (tournament) {
     const now = new Date();
-    const homeTeam = db.$with("ht").as(db.select().from(teams));
     const rows = await db
       .select()
       .from(matches)
@@ -57,7 +56,6 @@ export default async function HomePage() {
 
     const allTeams = await db.select().from(teams);
     const teamMap = new Map(allTeams.map((t) => [t.id, t]));
-    void homeTeam;
 
     upcomingMatches = rows.map((m) => ({
       ...m,

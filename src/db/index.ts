@@ -4,7 +4,7 @@ import * as schema from "./schema";
 
 const connectionString = process.env.DATABASE_URL!;
 
-// Disable prefetch as it's not supported for "Transaction" pool mode in Supabase
+// Disable prefetch as it's not supported for Neon's connection pooling
 const client = postgres(connectionString, { prepare: false });
 
 export const db = drizzle(client, { schema });
