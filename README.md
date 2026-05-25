@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FotbollsTipset ⚽
 
-## Getting Started
+Tippa fotbollsturneringar med kollegor. Byggd för VM 2026 men återanvändbar för framtida turneringar.
 
-First, run the development server:
+## Driftsätta (för Ruben)
+
+### Krav
+- Docker + Docker Compose
+- En domän med SSL (appen antar HTTPS i produktion)
+
+### 1. Klona repot
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/jfrodin/FotbollsTipset.git
+cd FotbollsTipset/fotbollstipset
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Skapa miljövariabler
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cp .env.example .env
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Öppna `.env` och fyll i:
 
-## Learn More
+| Variabel | Beskrivning |
+|---|---|
+| `DATABASE_URL` | Lämna som det är om du kör med docker-compose nedan |
+| `AUTH_SECRET` | Kör: `openssl rand -base64 32` |
+| `RESEND_API_KEY` | API-nyckel från resend.com |
+| `FROM_EMAIL` | t.ex. `noreply@speltorsk.madnuss.com` |
+| `CRON_SECRET` | Kör: `openssl rand -hex 32` |
+| `APP_URL` | t.ex. `https://speltorsk.madnuss.com` |
+| `FOOTBALL_API_KEY` | API-nyckel från api-football.com (kan lämnas tom tills vidare) |
 
-To learn more about Next.js, take a look at the following resources:
+### 3. Starta
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+docker compose up -d
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Det är allt. Appen startar, databasen skapas och migrationer körs automatiskt.
 
-## Deploy on Vercel
+Öppna `https://speltorsk.madnuss.com` i webbläsaren.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 4. Skapa admin-användare
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Logga in med din e-post på sajten. Kör sen:
+
+```bash
+docker compose exec db psql -U postgres fotbollstipset -c \
+  "UPDATE users SET role = 'admin' WHERE email = 'din@epost.se';"
+```
+
+### 5. Lägg till VM 2026 (i adminpanelen)
+
+Logga in → gå till `/admin` → skapa turnering.
+
+---
+
+## Automatisk synkronisering
+
+För att hämta matchresultat automatiskt, sätt upp ett cron-jobb som anropar:
+
+```
+GET https://speltorsk.madnuss.com/api/cron/sync
+Header: x-cron-secret: <ditt CRON_SECRET>
+```
+
+Rekommenderat intervall: var 5:e minut under matchdagar.
+
+---
+
+## Lokal utveckling
+
+```bash
+cp .env.example .env.local
+# Fyll i DATABASE_URL med en Postgres-databas
+npm install --legacy-peer-deps
+npm run db:migrate
+npm run dev
+```
+
+Inloggningskoder skrivs ut i terminalen om `RESEND_API_KEY` saknas.
