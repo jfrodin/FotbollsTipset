@@ -29,9 +29,12 @@ export function Navbar({ user }: NavbarProps) {
         <div className="flex items-center gap-3 text-sm">
           {user ? (
             <>
-              <span className="text-gray-700 dark:text-gray-300 font-medium">
+              <Link
+                href="/profile"
+                className="text-gray-700 dark:text-gray-300 font-medium hover:text-green-600 dark:hover:text-green-400 transition-colors"
+              >
                 {user.displayName}
-              </span>
+              </Link>
               {user.role === "admin" && (
                 <Link
                   href="/admin"
