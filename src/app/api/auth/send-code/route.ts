@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createAuthCode } from "@/lib/auth/otp";
-import { sendLoginCode } from "@/lib/email/gmail";
+import { sendLoginCode } from "@/lib/email/resend";
 
 const schema = z.object({ email: z.string().email() });
 
