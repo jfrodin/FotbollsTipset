@@ -1,0 +1,35 @@
+name: restart-pod
+
+on:
+  workflow_call:
+    inputs:
+      namespace:
+        required: true
+        type: string
+      label:
+        required: true
+        type: string
+
+jobs:
+  restart:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restart one pod
+        run: |
+          API="https://kubernetes.default.svc"
+
+          POD=$(curl -sk \
+            -H "Authorization: Bearer $K8S_RESTART_TOKEN" \
+            "$API/api/v1/namespaces/${{ inputs.namespace }}/pods?labelSelector=${{ inputs.label }}" \
+            | jq -r '.items[0].metadata.name')
+
+          if [ "$POD" = "null" ] || [ -z "$POD" ]; then
+            echo "No pod found"
+            exit 1
+          fi
+
+          curl -sk -X DELETE \
+            -H "Authorization: Bearer $K8S_RESTART_TOKEN" \
+            "$API/api/v1/namespaces/${{ inputs.namespace }}/pods/$POD"
+        env:
+          K8S_RESTART_TOKEN: ${{ secrets.K8S_RESTART_TOKEN }}

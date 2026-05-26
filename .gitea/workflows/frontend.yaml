@@ -1,0 +1,46 @@
+name: speltorsk-frontend
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+      - prod
+    paths:
+      - frontend/**
+      - .gitea/workflows/frontend.yaml
+      - .gitea/workflows/restart-pod.yaml
+
+env:
+  REPO: speltorsk
+  OWNER: madness
+  IMAGE_NAME: speltorsk-${{ github.ref_name }}-frontend
+
+jobs:
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Log in to registry
+        run: echo "${{ secrets.REGISTRY_TOKEN }}" | docker login gitea.madnuss.com -u "${{ secrets.REGISTRY_USER }}" --password-stdin
+
+      - name: Build & push image
+        run: |
+          IMAGE_BASE=gitea.madnuss.com/${OWNER}/${IMAGE_NAME}
+
+          docker build --network=host \
+            -t $IMAGE_BASE:${{ github.sha }} \
+            -t $IMAGE_BASE:latest \
+            .
+          docker push $IMAGE_BASE:${{ github.sha }}
+          docker push $IMAGE_BASE:latest
+
+  restart-frontend:
+    needs: build-frontend
+    uses: ./.gitea/workflows/restart-pod.yaml
+    with:
+      namespace: speltorsk
+      label: app=speltorsk-${{ github.ref_name }}-frontend
+    secrets: inherit
+
