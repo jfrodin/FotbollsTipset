@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       { hostname: "media.api-sports.io" },
       { hostname: "media-4.api-sports.io" },
+      { hostname: "flagcdn.com" },
     ],
   },
 };

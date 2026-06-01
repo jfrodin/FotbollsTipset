@@ -3,17 +3,9 @@ import { db } from "@/db";
 import { tournaments, matches, predictions, teams, users, phases } from "@/db/schema";
 import { eq, and, asc, gte, sum, sql } from "drizzle-orm";
 import { Navbar } from "@/components/Navbar";
+import { CountryFlag } from "@/components/CountryFlag";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-
-function countryFlag(code: string | null): string {
-  if (!code) return "";
-  if (code === "GB-ENG") return "🏴󠁧󠁢󠁥󠁮󠁧󠁿";
-  if (code === "GB-SCT") return "🏴󠁧󠁢󠁳󠁣󠁴󠁿";
-  return [...code.toUpperCase()].map((c) =>
-    String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)
-  ).join("");
-}
 
 async function getActiveTournament() {
   const [active] = await db
@@ -148,7 +140,7 @@ export default async function HomePage() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
               <Link
                 href={`/tournament/${tournament.id}/group`}
                 className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:border-green-400 dark:hover:border-green-600 transition-colors group"
@@ -188,6 +180,17 @@ export default async function HomePage() {
                   Tabell
                 </div>
                 <div className="text-sm text-gray-500 mt-0.5">Se ställningen</div>
+              </Link>
+
+              <Link
+                href={`/tournament/${tournament.id}/standings`}
+                className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:border-green-400 dark:hover:border-green-600 transition-colors group"
+              >
+                <div className="text-3xl mb-2">🌍</div>
+                <div className="font-semibold group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
+                  VM-ställning
+                </div>
+                <div className="text-sm text-gray-500 mt-0.5">Grupperna i VM</div>
               </Link>
             </div>
 
@@ -242,13 +245,13 @@ export default async function HomePage() {
                       </span>
                       <span className="flex-1 flex items-center justify-center gap-2 font-medium">
                         <span className="flex items-center gap-1.5">
-                          <span className="text-2xl leading-none">{countryFlag(m.homeTeam?.countryCode ?? null)}</span>
+                          <CountryFlag code={m.homeTeam?.countryCode} size={20} />
                           {m.homeTeam?.name ?? "–"}
                         </span>
                         <span className="text-gray-400 font-normal">vs</span>
                         <span className="flex items-center gap-1.5">
                           {m.awayTeam?.name ?? "–"}
-                          <span className="text-2xl leading-none">{countryFlag(m.awayTeam?.countryCode ?? null)}</span>
+                          <CountryFlag code={m.awayTeam?.countryCode} size={20} />
                         </span>
                       </span>
                       <span className="text-gray-400 text-xs w-12 text-right shrink-0">{m.groupName?.replace("Grupp ", "Gr ") ?? ""}</span>

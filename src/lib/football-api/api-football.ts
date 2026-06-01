@@ -36,3 +36,24 @@ export async function fetchLiveFixtures(leagueId: string): Promise<ApiFootballFi
 export async function fetchTeams(leagueId: string, season: number): Promise<ApiFootballTeam[]> {
   return apiFetch<ApiFootballTeam[]>(`/teams?league=${leagueId}&season=${season}`);
 }
+
+export async function fetchStandings(leagueId: string, season: number): Promise<ApiFootballStandingsResponse[]> {
+  return apiFetch<ApiFootballStandingsResponse[]>(`/standings?league=${leagueId}&season=${season}`);
+}
+
+export interface ApiFootballStandingsResponse {
+  league: {
+    id: number;
+    name: string;
+    standings: ApiFootballStandingEntry[][];
+  };
+}
+
+export interface ApiFootballStandingEntry {
+  rank: number;
+  team: { id: number; name: string; logo: string };
+  points: number;
+  goalsDiff: number;
+  group: string;
+  all: { played: number; win: number; draw: number; lose: number; goals: { for: number; against: number } };
+}

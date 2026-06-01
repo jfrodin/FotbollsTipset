@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useOptimistic, useTransition } from "react";
+import { CountryFlag } from "./CountryFlag";
 
 interface Match {
   id: string;
@@ -64,14 +65,6 @@ function formatTime(iso: string): string {
   });
 }
 
-function countryFlag(code: string | null): string {
-  if (!code) return "";
-  if (code === "GB-ENG") return "🏴󠁧󠁢󠁥󠁮󠁧󠁿";
-  if (code === "GB-SCT") return "🏴󠁧󠁢󠁳󠁣󠁴󠁿";
-  return [...code.toUpperCase()].map((c) =>
-    String.fromCodePoint(0x1f1e6 + c.charCodeAt(0) - 65)
-  ).join("");
-}
 
 function matchIsLocked(match: Match): boolean {
   return (
@@ -130,8 +123,6 @@ export function PredictionInput({ match }: PredictionInputProps) {
 
   const homeName = match.homeTeam?.name ?? "?";
   const awayName = match.awayTeam?.name ?? "?";
-  const homeFlag = countryFlag(match.homeTeam?.countryCode ?? null);
-  const awayFlag = countryFlag(match.awayTeam?.countryCode ?? null);
 
   const changed =
     match.userPrediction?.predictedHomeScore !== homeScore ||
@@ -152,7 +143,7 @@ export function PredictionInput({ match }: PredictionInputProps) {
       <div className="flex items-center gap-3">
         {/* Home team */}
         <div className="flex-1 flex items-center justify-end gap-2">
-          {homeFlag && <span className="text-3xl leading-none">{homeFlag}</span>}
+          <CountryFlag code={match.homeTeam?.countryCode} size={24} />
           <span className="font-semibold text-sm">{homeName}</span>
         </div>
 
@@ -192,7 +183,7 @@ export function PredictionInput({ match }: PredictionInputProps) {
         {/* Away team */}
         <div className="flex-1 flex items-center gap-2">
           <span className="font-semibold text-sm">{awayName}</span>
-          {awayFlag && <span className="text-3xl leading-none">{awayFlag}</span>}
+          <CountryFlag code={match.awayTeam?.countryCode} size={24} />
         </div>
       </div>
 
