@@ -7,3 +7,4 @@ npx drizzle-kit migrate
 echo "Starting app..."
 exec node server.js
 
+
