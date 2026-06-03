@@ -6,10 +6,6 @@ on:
       - main
       - staging
       - prod
-    paths:
-      - /**
-      - .gitea/workflows/frontend.yaml
-      - .gitea/workflows/restart-pod.yaml
 
 env:
   REPO: speltorsk
