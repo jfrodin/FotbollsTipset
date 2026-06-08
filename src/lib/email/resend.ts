@@ -45,7 +45,7 @@ export async function sendBroadcastEmail(email: string, name: string, subject: s
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px">
         <h2 style="margin:0 0 8px">FotbollsTipset</h2>
         <p>Hej ${name}!</p>
-        ${body.split("\n").map(line => line ? `<p>${line}</p>` : "<br>").join("")}
+        ${body.split("\n").map(line => line ? `<p>${line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>` : "<br>").join("")}
         <p style="color:#999;font-size:12px;margin-top:32px;border-top:1px solid #eee;padding-top:16px">
           Du får detta mail eftersom du är registrerad på FotbollsTipset.
         </p>

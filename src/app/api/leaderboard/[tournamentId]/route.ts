@@ -29,7 +29,6 @@ export async function GET(
     .select({
       userId: predictions.userId,
       displayName: users.displayName,
-      email: users.email,
       totalPoints: sum(predictions.points).mapWith(Number),
       exactScores: count(sql`CASE WHEN ${predictions.isExactScore} = true THEN 1 END`).mapWith(Number),
       correctOutcomes: count(sql`CASE WHEN ${predictions.isCorrectOutcome} = true THEN 1 END`).mapWith(Number),
@@ -38,7 +37,7 @@ export async function GET(
     .from(predictions)
     .innerJoin(users, eq(predictions.userId, users.id))
     .where(and(...conditions))
-    .groupBy(predictions.userId, users.displayName, users.email);
+    .groupBy(predictions.userId, users.displayName);
 
   // Sort: points DESC, exactScores DESC, correctOutcomes DESC, predictionsCount DESC, displayName ASC
   const sorted = rows.sort((a, b) => {

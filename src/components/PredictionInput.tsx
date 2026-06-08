@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useOptimistic, useTransition } from "react";
+import { useState } from "react";
 import { CountryFlag } from "./CountryFlag";
 
 interface Match {
