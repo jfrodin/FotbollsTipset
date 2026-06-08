@@ -1,1 +1,1 @@
-ALTER TABLE "matches" ADD COLUMN IF NOT EXISTS "venue" text;
+ALTER TABLE "matches" ADD COLUMN "venue" text;

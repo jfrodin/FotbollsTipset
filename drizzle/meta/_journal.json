@@ -15,6 +15,13 @@
       "when": 1779703425636,
       "tag": "0001_add-profile-complete",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780901461187,
+      "tag": "0002_add-venue",
+      "breakpoints": true
     }
   ]
 }
