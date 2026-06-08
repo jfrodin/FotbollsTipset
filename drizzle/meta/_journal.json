@@ -43,6 +43,13 @@
       "when": 1780925424713,
       "tag": "0005_add-accepted-terms",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1780925639351,
+      "tag": "0006_remove-has-paid",
+      "breakpoints": true
     }
   ]
 }

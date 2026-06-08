@@ -40,8 +40,8 @@ export default async function HomePage() {
   };
   let upcomingMatches: UpcomingMatch[] = [];
   let pendingCount = 0;
-  const [{ paidCount }] = await db.select({ paidCount: count().mapWith(Number) }).from(users).where(eq(users.hasPaid, true));
-  const prizePool = paidCount * 50;
+  const [{ acceptedCount }] = await db.select({ acceptedCount: count().mapWith(Number) }).from(users).where(eq(users.hasAcceptedTerms, true));
+  const prizePool = acceptedCount * 50;
   let hasKnockout = false;
 
   if (tournament) {

@@ -17,7 +17,7 @@ interface User {
   email: string;
   displayName: string;
   role: string;
-  hasPaid: boolean;
+  hasAcceptedTerms: boolean;
   createdAt: Date;
   predictionCount: number;
 }
@@ -96,14 +96,6 @@ export function AdminPanel({ tournaments, users, syncLogs, currentUserId }: Prop
     router.refresh();
   }
 
-  async function togglePaid(id: string, hasPaid: boolean) {
-    await fetch(`/api/admin/users/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hasPaid: !hasPaid }),
-    });
-    router.refresh();
-  }
 
   async function deleteUser(id: string, name: string) {
     if (!confirm(`Ta bort ${name}? Detta går inte att ångra.`)) return;
@@ -215,7 +207,7 @@ export function AdminPanel({ tournaments, users, syncLogs, currentUserId }: Prop
                 <th className="text-left px-4 py-3 hidden sm:table-cell">E-post</th>
                 <th className="text-left px-4 py-3">Roll</th>
                 <th className="text-right px-4 py-3 hidden sm:table-cell">Tips</th>
-                <th className="text-center px-4 py-3">Betalt</th>
+                <th className="text-center px-4 py-3">Godkänt</th>
                 <th className="text-left px-4 py-3 hidden md:table-cell">Registrerad</th>
                 <th className="px-4 py-3"></th>
               </tr>
@@ -242,14 +234,8 @@ export function AdminPanel({ tournaments, users, syncLogs, currentUserId }: Prop
                   <td className="px-4 py-3 text-right text-gray-500 text-sm hidden sm:table-cell">
                     {u.predictionCount}
                   </td>
-                  <td className="px-4 py-3 text-center">
-                    <button
-                      onClick={() => togglePaid(u.id, u.hasPaid)}
-                      className={`text-lg transition-opacity hover:opacity-70`}
-                      title={u.hasPaid ? "Markera som ej betalt" : "Markera som betalt"}
-                    >
-                      {u.hasPaid ? "✅" : "⬜"}
-                    </button>
+                  <td className="px-4 py-3 text-center text-lg">
+                    {u.hasAcceptedTerms ? "✅" : "⬜"}
                   </td>
                   <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">
                     {new Date(u.createdAt).toLocaleDateString("sv-SE")}

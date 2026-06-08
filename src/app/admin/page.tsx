@@ -19,7 +19,7 @@ export default async function AdminPage() {
         email: users.email,
         displayName: users.displayName,
         role: users.role,
-        hasPaid: users.hasPaid,
+        hasAcceptedTerms: users.hasAcceptedTerms,
         createdAt: users.createdAt,
       })
       .from(users)
@@ -32,7 +32,7 @@ export default async function AdminPage() {
   ]);
 
   const predCountMap = new Map(predCounts.map((p) => [p.userId, p.count]));
-  const usersWithCount = allUsers.map((u) => ({ ...u, predictionCount: predCountMap.get(u.id) ?? 0 }));
+  const usersWithCount = allUsers.map((u) => ({ ...u, predictionCount: predCountMap.get(u.id) ?? 0, hasAcceptedTerms: u.hasAcceptedTerms }));
 
   return (
     <>
