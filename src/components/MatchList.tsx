@@ -18,6 +18,7 @@ interface Match {
   } | null;
   groupName: string | null;
   roundName: string | null;
+  venue: string | null;
   phaseName: string | null;
   phaseType: string | null;
 }

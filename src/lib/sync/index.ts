@@ -129,6 +129,9 @@ export async function syncTournament(tournamentId: string): Promise<SyncResult> 
       const status = mapFixtureStatus(fixture.fixture.status.short);
       const homeScore = fixture.goals.home;
       const awayScore = fixture.goals.away;
+      const venue = fixture.fixture.venue.name
+        ? `${fixture.fixture.venue.name}, ${fixture.fixture.venue.city ?? ""}`.trim().replace(/,\s*$/, "")
+        : null;
 
       const [existingMatch] = await db
         .select()
@@ -149,6 +152,7 @@ export async function syncTournament(tournamentId: string): Promise<SyncResult> 
               status,
               homeScore,
               awayScore,
+              venue,
               updatedAt: new Date(),
             })
             .where(eq(matches.id, existingMatch.id));
@@ -176,6 +180,7 @@ export async function syncTournament(tournamentId: string): Promise<SyncResult> 
           status,
           homeScore,
           awayScore,
+          venue,
           roundName,
         });
         result.matchesUpdated++;

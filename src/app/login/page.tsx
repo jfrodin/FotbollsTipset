@@ -20,6 +20,7 @@ export default function LoginPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
+    
     setLoading(false);
     if (res.ok) {
       setStep("code");
@@ -29,7 +30,7 @@ export default function LoginPage() {
   }
 
 
-  
+
   async function verifyCode(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);

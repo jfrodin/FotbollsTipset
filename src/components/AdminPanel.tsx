@@ -18,6 +18,7 @@ interface User {
   displayName: string;
   role: string;
   createdAt: Date;
+  predictionCount: number;
 }
 
 interface SyncLog {
@@ -177,6 +178,7 @@ export function AdminPanel({ tournaments, users, syncLogs }: Props) {
                 <th className="text-left px-4 py-3">Namn</th>
                 <th className="text-left px-4 py-3 hidden sm:table-cell">E-post</th>
                 <th className="text-left px-4 py-3">Roll</th>
+                <th className="text-right px-4 py-3 hidden sm:table-cell">Tips</th>
                 <th className="text-left px-4 py-3 hidden md:table-cell">Registrerad</th>
                 <th className="px-4 py-3"></th>
               </tr>
@@ -195,6 +197,9 @@ export function AdminPanel({ tournaments, users, syncLogs }: Props) {
                       <option value="player">player</option>
                       <option value="admin">admin</option>
                     </select>
+                  </td>
+                  <td className="px-4 py-3 text-right text-gray-500 text-sm hidden sm:table-cell">
+                    {u.predictionCount}
                   </td>
                   <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">
                     {new Date(u.createdAt).toLocaleDateString("sv-SE")}

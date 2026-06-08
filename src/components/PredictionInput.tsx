@@ -19,6 +19,7 @@ interface Match {
   } | null;
   groupName: string | null;
   roundName: string | null;
+  venue: string | null;
 }
 
 interface PredictionInputProps {
@@ -131,9 +132,12 @@ export function PredictionInput({ match }: PredictionInputProps) {
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl p-4 shadow-sm">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs text-gray-400">
-          {match.groupName ?? match.roundName ?? ""}
-        </span>
+        <div>
+          <span className="text-xs text-gray-400">{match.groupName ?? match.roundName ?? ""}</span>
+          {match.venue && (
+            <span className="block text-xs text-gray-300 dark:text-gray-600 mt-0.5">📍 {match.venue}</span>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           {statusBadge(match)}
           <span className="text-xs text-gray-400">{formatTime(match.startsAt)}</span>

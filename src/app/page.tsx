@@ -263,6 +263,14 @@ export default async function HomePage() {
           </>
         )}
       </main>
+      <footer className="max-w-4xl mx-auto px-4 py-6 w-full text-center">
+        <p className="text-xs text-gray-400">
+          Hittat en bugg eller har ett förslag?{" "}
+          <a href="mailto:joakim.frodin@gmail.com" className="underline hover:text-gray-600 dark:hover:text-gray-300">
+            Kontakta Joakim
+          </a>
+        </p>
+      </footer>
     </>
   );
 }

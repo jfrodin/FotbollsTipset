@@ -146,6 +146,7 @@ export const matches = pgTable("matches", {
   winnerTeamId: text("winner_team_id").references(() => teams.id),
   groupName: text("group_name"),
   roundName: text("round_name"),
+  venue: text("venue"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (t) => [

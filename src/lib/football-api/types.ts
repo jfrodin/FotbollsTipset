@@ -5,6 +5,10 @@ export interface ApiFootballFixture {
     status: {
       short: string; // NS, 1H, HT, 2H, FT, AET, PEN, PST, CANC, etc.
     };
+    venue: {
+      name: string | null;
+      city: string | null;
+    };
   };
   league: {
     id: number;
