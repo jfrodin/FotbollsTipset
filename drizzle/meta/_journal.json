@@ -36,6 +36,13 @@
       "when": 1780919241429,
       "tag": "0004_add-has-paid",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1780925424713,
+      "tag": "0005_add-accepted-terms",
+      "breakpoints": true
     }
   ]
 }

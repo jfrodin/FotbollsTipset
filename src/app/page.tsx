@@ -4,6 +4,7 @@ import { tournaments, matches, predictions, teams, users, phases } from "@/db/sc
 import { eq, and, asc, gte, sum, sql, count } from "drizzle-orm";
 import { Navbar } from "@/components/Navbar";
 import { CountryFlag } from "@/components/CountryFlag";
+import { TermsModal } from "@/components/TermsModal";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -105,6 +106,7 @@ export default async function HomePage() {
 
   return (
     <>
+      {!session.hasAcceptedTerms && <TermsModal />}
       <Navbar user={session} />
       <div className="bg-gradient-to-br from-green-700 via-green-600 to-emerald-500 text-white">
         <div className="max-w-4xl mx-auto px-4 py-10">

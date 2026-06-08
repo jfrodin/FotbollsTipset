@@ -53,6 +53,7 @@ export const users = pgTable("users", {
   role: userRoleEnum("role").notNull().default("player"),
   profileComplete: boolean("profile_complete").notNull().default(false),
   hasPaid: boolean("has_paid").notNull().default(false),
+  hasAcceptedTerms: boolean("has_accepted_terms").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (t) => [uniqueIndex("users_email_idx").on(t.email)]);
