@@ -117,16 +117,9 @@ export default async function HomePage() {
           {!tournament && (
             <p className="text-green-200 mt-2 text-sm">Ingen aktiv turnering just nu.</p>
           )}
-          <div className="flex items-center gap-4 mt-4">
-            <Link href="/rules" className="text-sm text-green-200 hover:text-white underline underline-offset-2 transition-colors">
-              Hur funkar det? →
-            </Link>
-            {prizePool > 0 && (
-              <span className="text-sm text-green-100 font-medium">
-                🏆 Prispott: <span className="font-bold text-white">{prizePool} kr</span>
-              </span>
-            )}
-          </div>
+          <Link href="/rules" className="inline-block mt-4 text-sm text-green-200 hover:text-white underline underline-offset-2 transition-colors">
+            Hur funkar det? →
+          </Link>
         </div>
       </div>
 
@@ -144,6 +137,16 @@ export default async function HomePage() {
                 >
                   Tippa nu →
                 </Link>
+              </div>
+            )}
+
+            {prizePool > 0 && (
+              <div className="bg-gradient-to-r from-yellow-400 to-amber-400 rounded-xl p-4 mb-6 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-amber-900 uppercase tracking-wide">Prispott</p>
+                  <p className="text-3xl font-[family-name:var(--font-bebas)] tracking-wide text-amber-900">{prizePool} kr</p>
+                </div>
+                <span className="text-5xl">🏆</span>
               </div>
             )}
 
