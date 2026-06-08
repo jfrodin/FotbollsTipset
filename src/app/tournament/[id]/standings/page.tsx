@@ -7,6 +7,12 @@ import { tournaments } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { fetchStandings } from "@/lib/football-api/api-football";
 import { toSwedish } from "@/lib/team-names";
+
+function toSwedishGroup(name: string): string {
+  return name
+    .replace(/^Group\s+/, "Grupp ")
+    .replace("Third placed teams", "Tredjeplats-lag");
+}
 import Image from "next/image";
 
 interface Props {
@@ -74,7 +80,7 @@ export default async function StandingsPage({ params }: Props) {
             <div key={group.name} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
               <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                 <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  {group.name}
+                  {toSwedishGroup(group.name)}
                 </span>
               </div>
               <table className="w-full text-sm">
