@@ -26,10 +26,6 @@ export function TermsModal() {
             <p>Det kostar <strong>50 kr</strong> att delta. När turneringen är klar swishar alla deltagare 50 kr till vinnaren.</p>
           </div>
           <div className="flex items-start gap-3 text-sm">
-            <span className="text-base">📱</span>
-            <p>Swisha till <strong>076-834 49 25</strong>, skriv <strong>Fotbollstipset</strong>.</p>
-          </div>
-          <div className="flex items-start gap-3 text-sm">
             <span className="text-base">🔒</span>
             <p>Du kan tippa fram tills matchen startar – inte efter.</p>
           </div>
