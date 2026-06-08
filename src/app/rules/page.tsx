@@ -82,7 +82,7 @@ export default async function RulesPage() {
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-base mt-0.5">⏰</span>
-                <p>Betalning måste vara gjord senast innan första matchstart <strong className="text-gray-800 dark:text-gray-200">11 juni kl 21:00</strong>. Annars tas du bort ur systemet.</p>
+                <p>Swisha när du vill – alla som är med swishar vinnaren när turneringen är klar.</p>
               </div>
             </div>
           </div>
