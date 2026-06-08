@@ -31,6 +31,28 @@ export async function sendReminderEmail(email: string, name: string, matchCount:
   });
 }
 
+export async function sendBroadcastEmail(email: string, name: string, subject: string, body: string) {
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    console.log(`Broadcast till ${email}: ${subject}`);
+    return;
+  }
+
+  await transporter.sendMail({
+    from: `FotbollsTipset <${process.env.GMAIL_USER}>`,
+    to: email,
+    subject,
+    html: `
+      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px">
+        <h2 style="margin:0 0 8px">FotbollsTipset</h2>
+        <p>Hej ${name}!</p>
+        ${body.split("\n").map(line => line ? `<p>${line}</p>` : "<br>").join("")}
+        <p style="color:#999;font-size:12px;margin-top:32px;border-top:1px solid #eee;padding-top:16px">
+          Du får detta mail eftersom du är registrerad på FotbollsTipset.
+        </p>
+      </div>`,
+  });
+}
+
 export async function sendLoginCode(email: string, code: string) {
   if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
     console.log(`\nInloggningskod for ${email}: ${code}\n`);

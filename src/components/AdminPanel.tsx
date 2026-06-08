@@ -39,7 +39,7 @@ interface Props {
   syncLogs: SyncLog[];
 }
 
-type Tab = "tournaments" | "users" | "sync";
+type Tab = "tournaments" | "users" | "sync" | "mail";
 
 export function AdminPanel({ tournaments, users, syncLogs }: Props) {
   const router = useRouter();
@@ -47,6 +47,10 @@ export function AdminPanel({ tournaments, users, syncLogs }: Props) {
   const [syncing, setSyncing] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<string | null>(null);
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
+  const [mailSubject, setMailSubject] = useState("");
+  const [mailBody, setMailBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [mailResult, setMailResult] = useState<string | null>(null);
 
   async function triggerSync(tournamentId: string) {
     setSyncing(tournamentId);
@@ -97,10 +101,30 @@ export function AdminPanel({ tournaments, users, syncLogs }: Props) {
     router.refresh();
   }
 
+  async function sendMail() {
+    setSending(true);
+    setMailResult(null);
+    try {
+      const res = await fetch("/api/admin/broadcast", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subject: mailSubject, body: mailBody }),
+      });
+      const data = await res.json();
+      setMailResult(res.ok ? `✓ Skickat till ${data.sent} användare` : `✗ ${data.error}`);
+      if (res.ok) { setMailSubject(""); setMailBody(""); }
+    } catch {
+      setMailResult("✗ Nätverksfel");
+    } finally {
+      setSending(false);
+    }
+  }
+
   const tabs: { id: Tab; label: string }[] = [
     { id: "tournaments", label: "Turneringar" },
     { id: "users", label: `Användare (${users.length})` },
     { id: "sync", label: "Sync-loggar" },
+    { id: "mail", label: "Skicka mail" },
   ];
 
   return (
@@ -217,6 +241,49 @@ export function AdminPanel({ tournaments, users, syncLogs }: Props) {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Mail */}
+      {tab === "mail" && (
+        <div className="space-y-4">
+          {mailResult && (
+            <div className={`p-3 rounded-lg text-sm ${mailResult.startsWith("✓") ? "bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400" : "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400"}`}>
+              {mailResult}
+            </div>
+          )}
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ämne</label>
+              <input
+                type="text"
+                value={mailSubject}
+                onChange={(e) => setMailSubject(e.target.value)}
+                placeholder="Ämnesrad"
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Meddelande</label>
+              <textarea
+                value={mailBody}
+                onChange={(e) => setMailBody(e.target.value)}
+                placeholder="Skriv ditt meddelande här..."
+                rows={6}
+                className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-gray-400">Skickas till alla {users.length} användare</span>
+              <button
+                onClick={sendMail}
+                disabled={sending || !mailSubject.trim() || !mailBody.trim()}
+                className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-medium disabled:opacity-50 transition-colors"
+              >
+                {sending ? "Skickar…" : "Skicka till alla"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
