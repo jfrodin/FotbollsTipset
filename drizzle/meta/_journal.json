@@ -29,6 +29,13 @@
       "when": 1780911581766,
       "tag": "0003_add-broadcast-channel",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1780919241429,
+      "tag": "0004_add-has-paid",
+      "breakpoints": true
     }
   ]
 }

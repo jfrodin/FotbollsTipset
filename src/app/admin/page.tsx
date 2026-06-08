@@ -19,6 +19,7 @@ export default async function AdminPage() {
         email: users.email,
         displayName: users.displayName,
         role: users.role,
+        hasPaid: users.hasPaid,
         createdAt: users.createdAt,
       })
       .from(users)
