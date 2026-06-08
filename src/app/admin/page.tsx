@@ -43,6 +43,7 @@ export default async function AdminPage() {
           tournaments={allTournaments}
           users={usersWithCount}
           syncLogs={recentLogs}
+          currentUserId={session.id}
         />
       </main>
     </>

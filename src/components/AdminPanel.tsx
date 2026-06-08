@@ -38,11 +38,13 @@ interface Props {
   tournaments: Tournament[];
   users: User[];
   syncLogs: SyncLog[];
+  currentUserId: string;
 }
 
 type Tab = "tournaments" | "users" | "sync" | "mail";
 
-export function AdminPanel({ tournaments, users, syncLogs }: Props) {
+export function AdminPanel({ tournaments, users, syncLogs, currentUserId }: Props) {
+  const session = { id: currentUserId };
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("tournaments");
   const [syncing, setSyncing] = useState<string | null>(null);
@@ -224,14 +226,18 @@ export function AdminPanel({ tournaments, users, syncLogs }: Props) {
                   <td className="px-4 py-3 font-medium">{u.displayName}</td>
                   <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{u.email}</td>
                   <td className="px-4 py-3">
-                    <select
-                      value={u.role}
-                      onChange={(e) => updateUserRole(u.id, e.target.value)}
-                      className="text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
-                    >
-                      <option value="player">player</option>
-                      <option value="admin">admin</option>
-                    </select>
+                    {u.id === session?.id ? (
+                      <span className="text-xs text-gray-400 px-2 py-1">{u.role}</span>
+                    ) : (
+                      <select
+                        value={u.role}
+                        onChange={(e) => updateUserRole(u.id, e.target.value)}
+                        className="text-xs px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
+                      >
+                        <option value="player">player</option>
+                        <option value="admin">admin</option>
+                      </select>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-right text-gray-500 text-sm hidden sm:table-cell">
                     {u.predictionCount}
