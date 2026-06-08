@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { tournaments } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { fetchStandings } from "@/lib/football-api/api-football";
+import { toSwedish } from "@/lib/team-names";
 import Image from "next/image";
 
 interface Props {
@@ -96,7 +97,7 @@ export default async function StandingsPage({ params }: Props) {
                       <td className="px-3 py-2">
                         <span className="flex items-center gap-2">
                           <Image src={entry.team.logo} alt={entry.team.name} width={16} height={16} unoptimized />
-                          <span className="font-medium truncate">{entry.team.name}</span>
+                          <span className="font-medium truncate">{toSwedish(entry.team.name)}</span>
                         </span>
                       </td>
                       <td className="text-center px-2 py-2 text-gray-500">{entry.all.played}</td>
