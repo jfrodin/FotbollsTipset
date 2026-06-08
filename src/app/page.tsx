@@ -1,7 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/db";
 import { tournaments, matches, predictions, teams, users, phases } from "@/db/schema";
-import { eq, and, asc, gte, sum, sql } from "drizzle-orm";
+import { eq, and, asc, gte, sum, sql, count } from "drizzle-orm";
 import { Navbar } from "@/components/Navbar";
 import { CountryFlag } from "@/components/CountryFlag";
 import Link from "next/link";
@@ -39,6 +39,8 @@ export default async function HomePage() {
   };
   let upcomingMatches: UpcomingMatch[] = [];
   let pendingCount = 0;
+  const [{ paidCount }] = await db.select({ paidCount: count().mapWith(Number) }).from(users).where(eq(users.hasPaid, true));
+  const prizePool = paidCount * 50;
   let hasKnockout = false;
 
   if (tournament) {
@@ -115,9 +117,16 @@ export default async function HomePage() {
           {!tournament && (
             <p className="text-green-200 mt-2 text-sm">Ingen aktiv turnering just nu.</p>
           )}
-          <Link href="/rules" className="inline-block mt-4 text-sm text-green-200 hover:text-white underline underline-offset-2 transition-colors">
-            Hur funkar det? →
-          </Link>
+          <div className="flex items-center gap-4 mt-4">
+            <Link href="/rules" className="text-sm text-green-200 hover:text-white underline underline-offset-2 transition-colors">
+              Hur funkar det? →
+            </Link>
+            {prizePool > 0 && (
+              <span className="text-sm text-green-100 font-medium">
+                🏆 Prispott: <span className="font-bold text-white">{prizePool} kr</span>
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
