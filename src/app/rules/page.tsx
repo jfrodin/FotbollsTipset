@@ -66,6 +66,27 @@ export default async function RulesPage() {
             </div>
           </div>
 
+          <div className="bg-white dark:bg-gray-900 border border-amber-200 dark:border-amber-800 rounded-xl p-6">
+            <h2 className="font-semibold text-lg mb-4">Deltagaravgift</h2>
+            <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-start gap-3">
+                <span className="text-base mt-0.5">💸</span>
+                <p>Det kostar <strong className="text-gray-800 dark:text-gray-200">50 kr</strong> att delta. Vinnaren tar hem hela potten.</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-base mt-0.5">📱</span>
+                <div>
+                  <p>Swisha <strong className="text-gray-800 dark:text-gray-200">076-834 49 25</strong></p>
+                  <p className="mt-0.5">Skriv <strong className="text-gray-800 dark:text-gray-200">Fotbollstipset</strong> som meddelande.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <span className="text-base mt-0.5">⏰</span>
+                <p>Betalning måste vara gjord senast innan första matchstart <strong className="text-gray-800 dark:text-gray-200">11 juni kl 21:00</strong>. Annars tas du bort ur systemet.</p>
+              </div>
+            </div>
+          </div>
+
           <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6">
             <h2 className="font-semibold text-lg mb-4">Vid lika poäng</h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Om flera spelare har samma poäng avgörs placeringen i denna ordning:</p>
