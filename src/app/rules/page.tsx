@@ -82,7 +82,7 @@ export default async function RulesPage() {
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-base mt-0.5">⏰</span>
-                <p>Swisha när du vill – alla som är med swishar vinnaren när turneringen är klar.</p>
+                <p>När turneringen är klar swishar alla deltagare <strong className="text-gray-800 dark:text-gray-200">50 kr</strong> till vinnaren.</p>
               </div>
             </div>
           </div>
