@@ -143,7 +143,8 @@ export async function syncTournament(tournamentId: string): Promise<SyncResult> 
         const changed =
           existingMatch.status !== status ||
           existingMatch.homeScore !== homeScore ||
-          existingMatch.awayScore !== awayScore;
+          existingMatch.awayScore !== awayScore ||
+          (venue !== null && existingMatch.venue !== venue);
 
         if (changed) {
           await db
