@@ -135,7 +135,7 @@ export function PredictionInput({ match }: PredictionInputProps) {
         <div>
           <span className="text-xs text-gray-400">{match.groupName ?? match.roundName ?? ""}</span>
           {match.venue && (
-            <span className="block text-xs text-gray-300 dark:text-gray-600 mt-0.5">📍 {match.venue}</span>
+            <span className="block text-xs text-gray-400 dark:text-gray-500 mt-0.5">📍 {match.venue}</span>
           )}
         </div>
         <div className="flex items-center gap-2">
