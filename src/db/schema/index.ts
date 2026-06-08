@@ -147,6 +147,7 @@ export const matches = pgTable("matches", {
   groupName: text("group_name"),
   roundName: text("round_name"),
   venue: text("venue"),
+  broadcastChannel: text("broadcast_channel"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (t) => [

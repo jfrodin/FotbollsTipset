@@ -23,6 +23,7 @@ async function getKnockoutMatches(tournamentId: string, userId?: string) {
       groupName: matches.groupName,
       roundName: matches.roundName,
       venue: matches.venue,
+      broadcastChannel: matches.broadcastChannel,
       homeTeamId: matches.homeTeamId,
       awayTeamId: matches.awayTeamId,
       phaseName: phases.name,
