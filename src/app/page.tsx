@@ -252,7 +252,13 @@ export default async function HomePage() {
                           <CountryFlag code={m.awayTeam?.countryCode} size={20} />
                         </span>
                       </span>
-                      <span className="text-gray-400 text-xs w-12 text-right shrink-0">{m.groupName?.replace("Grupp ", "Gr ") ?? ""}</span>
+                      <span className="flex items-center justify-end w-12 shrink-0">
+                        {m.broadcastChannel && (
+                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${m.broadcastChannel === "SVT" ? "bg-blue-600 text-white" : m.broadcastChannel === "TV4" ? "bg-red-600 text-white" : "bg-gray-200 text-gray-700"}`}>
+                            {m.broadcastChannel}
+                          </span>
+                        )}
+                      </span>
                     </Link>
                   ))}
                 </div>

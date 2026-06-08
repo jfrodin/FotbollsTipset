@@ -23,9 +23,9 @@ interface Match {
   broadcastChannel: string | null;
 }
 
-const CHANNEL_LOGOS: Record<string, string> = {
-  "SVT": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/SVT_logo_2016.svg/120px-SVT_logo_2016.svg.png",
-  "TV4": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/TV4_Sweden.svg/120px-TV4_Sweden.svg.png",
+const CHANNEL_STYLES: Record<string, string> = {
+  "SVT": "bg-blue-600 text-white",
+  "TV4": "bg-red-600 text-white",
 };
 
 interface PredictionInputProps {
@@ -146,15 +146,11 @@ export function PredictionInput({ match }: PredictionInputProps) {
         </div>
         <div className="flex items-center gap-2">
           {statusBadge(match)}
-          {match.broadcastChannel && CHANNEL_LOGOS[match.broadcastChannel] ? (
-            <img
-              src={CHANNEL_LOGOS[match.broadcastChannel]}
-              alt={match.broadcastChannel}
-              className="h-4 w-auto object-contain"
-            />
-          ) : match.broadcastChannel ? (
-            <span className="text-xs text-gray-400">{match.broadcastChannel}</span>
-          ) : null}
+          {match.broadcastChannel && (
+            <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${CHANNEL_STYLES[match.broadcastChannel] ?? "bg-gray-200 text-gray-700"}`}>
+              {match.broadcastChannel}
+            </span>
+          )}
           <span className="text-xs text-gray-400">{formatTime(match.startsAt)}</span>
         </div>
       </div>
