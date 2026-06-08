@@ -115,11 +115,9 @@ export default async function HomePage() {
           {!tournament && (
             <p className="text-green-200 mt-2 text-sm">Ingen aktiv turnering just nu.</p>
           )}
-          <div className="flex flex-wrap gap-4 mt-5 text-sm text-green-100">
-            <span className="flex items-center gap-1.5"><span className="text-base">⚽</span> Rätt utfall = 2p</span>
-            <span className="flex items-center gap-1.5"><span className="text-base">🎯</span> Exakt resultat = 5p</span>
-            <span className="flex items-center gap-1.5"><span className="text-base">🔒</span> Stänger vid matchstart</span>
-          </div>
+          <Link href="/rules" className="inline-block mt-4 text-sm text-green-200 hover:text-white underline underline-offset-2 transition-colors">
+            Hur funkar det? →
+          </Link>
         </div>
       </div>
 
