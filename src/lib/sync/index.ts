@@ -13,6 +13,23 @@ import { fetchFixtures, fetchTeams } from "@/lib/football-api/api-football";
 import { mapFixtureStatus, roundToPhaseType } from "@/lib/football-api/types";
 import { calculatePoints } from "@/lib/scoring";
 
+const COUNTRY_NAME_TO_ISO: Record<string, string> = {
+  "Mexico": "MX", "South Africa": "ZA", "South Korea": "KR", "Czechia": "CZ", "Czech Republic": "CZ",
+  "Canada": "CA", "Bosnia and Herzegovina": "BA", "Qatar": "QA", "Switzerland": "CH",
+  "Brazil": "BR", "Morocco": "MA", "Scotland": "GB-SCT", "Haiti": "HT",
+  "USA": "US", "United States": "US", "Paraguay": "PY", "Australia": "AU", "Turkey": "TR",
+  "Germany": "DE", "Ivory Coast": "CI", "Ecuador": "EC", "Curacao": "CW", "Curaçao": "CW",
+  "Netherlands": "NL", "Japan": "JP", "Sweden": "SE", "Tunisia": "TN",
+  "Belgium": "BE", "Egypt": "EG", "Iran": "IR", "New Zealand": "NZ",
+  "Spain": "ES", "Cape Verde": "CV", "Saudi Arabia": "SA", "Uruguay": "UY",
+  "France": "FR", "Senegal": "SN", "Iraq": "IQ", "Norway": "NO",
+  "Argentina": "AR", "Algeria": "DZ", "Austria": "AT", "Jordan": "JO",
+  "Portugal": "PT", "DR Congo": "CD", "Uzbekistan": "UZ", "Colombia": "CO",
+  "England": "GB-ENG", "Croatia": "HR", "Ghana": "GH", "Panama": "PA",
+  "Serbia": "RS", "Ukraine": "UA", "Poland": "PL", "Denmark": "DK",
+  "Wales": "GB-WLS", "Italy": "IT",
+};
+
 export interface SyncResult {
   matchesUpdated: number;
   predictionsScored: number;
@@ -42,12 +59,13 @@ export async function syncTournament(tournamentId: string): Promise<SyncResult> 
     // Sync teams
     const apiTeams = await fetchTeams(leagueId, season);
     for (const { team } of apiTeams) {
+      const countryCode = COUNTRY_NAME_TO_ISO[team.country] ?? team.country;
       await db
         .insert(teams)
         .values({
           name: team.name,
           shortName: team.code,
-          countryCode: team.country,
+          countryCode,
           logoUrl: team.logo,
           externalId: String(team.id),
         })
@@ -56,6 +74,7 @@ export async function syncTournament(tournamentId: string): Promise<SyncResult> 
           set: {
             name: team.name,
             shortName: team.code,
+            countryCode,
             logoUrl: team.logo,
           },
         });
