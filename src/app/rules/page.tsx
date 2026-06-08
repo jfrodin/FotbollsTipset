@@ -74,13 +74,6 @@ export default async function RulesPage() {
                 <p>Det kostar <strong className="text-gray-800 dark:text-gray-200">50 kr</strong> att delta. Vinnaren tar hem hela potten.</p>
               </div>
               <div className="flex items-start gap-3">
-                <span className="text-base mt-0.5">📱</span>
-                <div>
-                  <p>Swisha <strong className="text-gray-800 dark:text-gray-200">076-834 49 25</strong></p>
-                  <p className="mt-0.5">Skriv <strong className="text-gray-800 dark:text-gray-200">Fotbollstipset</strong> som meddelande.</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
                 <span className="text-base mt-0.5">⏰</span>
                 <p>När turneringen är klar swishar alla deltagare <strong className="text-gray-800 dark:text-gray-200">50 kr</strong> till vinnaren.</p>
               </div>
