@@ -22,12 +22,12 @@ export async function POST(req: NextRequest) {
   }
 
   const now = new Date();
-  const in2h = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+  const in12h = new Date(now.getTime() + 12 * 60 * 60 * 1000);
 
   const upcomingMatches = await db
     .select()
     .from(matches)
-    .where(and(gte(matches.startsAt, now), lte(matches.startsAt, in2h), eq(matches.status, "scheduled")));
+    .where(and(gte(matches.startsAt, now), lte(matches.startsAt, in12h), eq(matches.status, "scheduled")));
 
   if (upcomingMatches.length === 0) {
     return NextResponse.json({ reminded: 0 });
