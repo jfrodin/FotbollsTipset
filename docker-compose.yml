@@ -17,5 +17,5 @@ services:
     entrypoint: >
       sh -c "apk add --no-cache curl &&
              (echo '0 */2 * * * curl -s -X POST http://app:3000/api/cron/sync -H \"x-cron-secret: $${CRON_SECRET}\"';
-              echo '0 * * * * curl -s -X POST http://app:3000/api/cron/remind -H \"x-cron-secret: $${CRON_SECRET}\"') | crontab - &&
+              echo '0 8,17 * * * curl -s -X POST http://app:3000/api/cron/remind -H \"x-cron-secret: $${CRON_SECRET}\"') | crontab - &&
              crond -f -l 8"
