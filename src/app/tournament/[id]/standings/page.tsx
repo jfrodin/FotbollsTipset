@@ -11,7 +11,8 @@ import { toSwedish } from "@/lib/team-names";
 function toSwedishGroup(name: string): string {
   return name
     .replace(/^Group\s+/, "Grupp ")
-    .replace("Third placed teams", "Tredjeplats-lag");
+    .replace("Third placed teams", "Tredjeplats-lag")
+    .replace("Ranking of third-placed teams", "Tredjeplats-lag");
 }
 import Image from "next/image";
 
