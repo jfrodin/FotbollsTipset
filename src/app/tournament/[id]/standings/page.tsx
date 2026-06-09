@@ -11,8 +11,8 @@ import { toSwedish } from "@/lib/team-names";
 function toSwedishGroup(name: string): string {
   return name
     .replace(/^Group\s+/, "Grupp ")
-    .replace("Third placed teams", "Tredjeplats-lag")
-    .replace("Ranking of third-placed teams", "Tredjeplats-lag");
+    .replace("Third placed teams", "Bästa grupptreor")
+    .replace("Ranking of third-placed teams", "Bästa grupptreor");
 }
 import Image from "next/image";
 
@@ -98,8 +98,8 @@ export default async function StandingsPage({ params }: Props) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                  {group.entries.map((entry) => (
-                    <tr key={entry.team.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                  {group.entries.map((entry, idx) => (
+                    <tr key={entry.team.id} className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 ${group.name.toLowerCase().includes("third") && idx === 8 ? "border-t-2 border-green-400 dark:border-green-600" : ""}`}>
                       <td className="px-3 py-2 text-gray-400 text-xs">{entry.rank}</td>
                       <td className="px-3 py-2">
                         <span className="flex items-center gap-2">
