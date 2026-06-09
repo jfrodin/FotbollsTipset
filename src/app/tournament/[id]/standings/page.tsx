@@ -93,6 +93,8 @@ export default async function StandingsPage({ params }: Props) {
                     <th className="text-center px-2 py-1.5">V</th>
                     <th className="text-center px-2 py-1.5">O</th>
                     <th className="text-center px-2 py-1.5">F</th>
+                    <th className="text-center px-2 py-1.5 hidden sm:table-cell">GM</th>
+                    <th className="text-center px-2 py-1.5 hidden sm:table-cell">IM</th>
                     <th className="text-center px-2 py-1.5">+/-</th>
                     <th className="text-right px-3 py-1.5 font-bold text-gray-500">P</th>
                   </tr>
@@ -111,6 +113,8 @@ export default async function StandingsPage({ params }: Props) {
                       <td className="text-center px-2 py-2 text-gray-500">{entry.all.win}</td>
                       <td className="text-center px-2 py-2 text-gray-500">{entry.all.draw}</td>
                       <td className="text-center px-2 py-2 text-gray-500">{entry.all.lose}</td>
+                      <td className="text-center px-2 py-2 text-gray-500 hidden sm:table-cell">{entry.all.goals.for}</td>
+                      <td className="text-center px-2 py-2 text-gray-500 hidden sm:table-cell">{entry.all.goals.against}</td>
                       <td className={`text-center px-2 py-2 font-medium ${entry.goalsDiff > 0 ? "text-green-600 dark:text-green-400" : entry.goalsDiff < 0 ? "text-red-500" : "text-gray-500"}`}>{entry.goalsDiff > 0 ? `+${entry.goalsDiff}` : entry.goalsDiff}</td>
                       <td className="text-right px-3 py-2 font-bold">{entry.points}</td>
                     </tr>
