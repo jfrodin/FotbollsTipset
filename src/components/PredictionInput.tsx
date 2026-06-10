@@ -97,7 +97,8 @@ export function PredictionInput({ match }: PredictionInputProps) {
   const locked = matchIsLocked(match);
   const [homeScore, setHomeScore] = useState(match.userPrediction?.predictedHomeScore ?? 0);
   const [awayScore, setAwayScore] = useState(match.userPrediction?.predictedAwayScore ?? 0);
-  const [saved, setSaved] = useState(!!match.userPrediction);
+  const [savedHome, setSavedHome] = useState(match.userPrediction?.predictedHomeScore ?? null);
+  const [savedAway, setSavedAway] = useState(match.userPrediction?.predictedAwayScore ?? null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -119,7 +120,8 @@ export function PredictionInput({ match }: PredictionInputProps) {
         const data = await res.json();
         setError(data.error ?? "Fel vid sparande");
       } else {
-        setSaved(true);
+        setSavedHome(homeScore);
+        setSavedAway(awayScore);
       }
     } catch {
       setError("Nätverksfel");
@@ -131,9 +133,8 @@ export function PredictionInput({ match }: PredictionInputProps) {
   const homeName = match.homeTeam?.name ?? "?";
   const awayName = match.awayTeam?.name ?? "?";
 
-  const changed =
-    match.userPrediction?.predictedHomeScore !== homeScore ||
-    match.userPrediction?.predictedAwayScore !== awayScore;
+  const saved = savedHome !== null;
+  const changed = savedHome !== homeScore || savedAway !== awayScore;
 
   return (
     <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl p-4 shadow-sm">
