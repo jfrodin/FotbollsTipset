@@ -84,7 +84,7 @@ export default async function HomePage() {
     }));
 
     const soon = upcomingMatches.filter(
-      (m) => new Date(m.startsAt) <= new Date(Date.now() + 48 * 60 * 60 * 1000)
+      (m) => new Date(m.startsAt) <= new Date(Date.now() + 24 * 60 * 60 * 1000)
     );
 
     if (soon.length > 0) {
@@ -132,7 +132,7 @@ export default async function HomePage() {
             {pendingCount > 0 && (
               <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-6">
                 <span className="text-amber-700 dark:text-amber-300 font-medium">
-                  ⚠️ Du har {pendingCount} match{pendingCount !== 1 ? "er" : ""} att tippa de närmaste 48 timmarna!
+                  ⚠️ Du har {pendingCount} match{pendingCount !== 1 ? "er" : ""} att tippa de närmaste 24 timmarna!
                 </span>
                 <Link
                   href={`/tournament/${tournament.id}/group`}
