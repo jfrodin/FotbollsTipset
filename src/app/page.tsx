@@ -51,20 +51,30 @@ export default async function HomePage() {
         userId: predictions.userId,
         displayName: users.displayName,
         points: sum(predictions.points).mapWith(Number),
+        exactScores: count(sql`CASE WHEN ${predictions.isExactScore} = true THEN 1 END`).mapWith(Number),
+        correctOutcomes: count(sql`CASE WHEN ${predictions.isCorrectOutcome} = true THEN 1 END`).mapWith(Number),
+        predictionsCount: count(predictions.id).mapWith(Number),
       })
       .from(predictions)
       .innerJoin(users, eq(predictions.userId, users.id))
       .where(eq(predictions.tournamentId, tournament.id))
-      .groupBy(predictions.userId, users.displayName)
-      .orderBy(sql`sum(${predictions.points}) desc nulls last`)
-      .limit(5);
+      .groupBy(predictions.userId, users.displayName);
 
-    leaderboard = topRows.map((r, i) => ({
-      userId: r.userId,
-      displayName: r.displayName,
-      points: r.points ?? 0,
-      rank: i + 1,
-    }));
+    leaderboard = topRows
+      .sort((a, b) => {
+        if ((b.points ?? 0) !== (a.points ?? 0)) return (b.points ?? 0) - (a.points ?? 0);
+        if (b.exactScores !== a.exactScores) return b.exactScores - a.exactScores;
+        if (b.correctOutcomes !== a.correctOutcomes) return b.correctOutcomes - a.correctOutcomes;
+        if (a.predictionsCount !== b.predictionsCount) return a.predictionsCount - b.predictionsCount;
+        return a.displayName.localeCompare(b.displayName);
+      })
+      .slice(0, 5)
+      .map((r, i) => ({
+        userId: r.userId,
+        displayName: r.displayName,
+        points: r.points ?? 0,
+        rank: i + 1,
+      }));
 
     const now = new Date();
     const rows = await db
