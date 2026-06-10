@@ -49,6 +49,8 @@ export function AdminPanel({ tournaments, users, syncLogs, currentUserId }: Prop
   const [tab, setTab] = useState<Tab>("tournaments");
   const [syncing, setSyncing] = useState<string | null>(null);
   const [syncResult, setSyncResult] = useState<string | null>(null);
+  const [reminding, setReminding] = useState(false);
+  const [remindResult, setRemindResult] = useState<string | null>(null);
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
   const [mailSubject, setMailSubject] = useState("");
   const [mailBody, setMailBody] = useState("");
@@ -105,6 +107,24 @@ export function AdminPanel({ tournaments, users, syncLogs, currentUserId }: Prop
     router.refresh();
   }
 
+  async function triggerReminders() {
+    setReminding(true);
+    setRemindResult(null);
+    try {
+      const res = await fetch("/api/admin/remind", { method: "POST" });
+      const data = await res.json();
+      setRemindResult(
+        res.ok
+          ? `✓ Skickat till ${data.reminded} användare (${data.matches} kommande matcher)`
+          : `✗ Fel: ${data.error}`
+      );
+    } catch {
+      setRemindResult("✗ Nätverksfel");
+    } finally {
+      setReminding(false);
+    }
+  }
+
   async function sendMail() {
     setSending(true);
     setMailResult(null);
@@ -158,6 +178,20 @@ export function AdminPanel({ tournaments, users, syncLogs, currentUserId }: Prop
               {syncResult}
             </div>
           )}
+          {remindResult && (
+            <div className={`p-3 rounded-lg text-sm ${remindResult.startsWith("✓") ? "bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400" : "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400"}`}>
+              {remindResult}
+            </div>
+          )}
+          <div className="flex justify-end">
+            <button
+              onClick={triggerReminders}
+              disabled={reminding}
+              className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium disabled:opacity-50 transition-colors"
+            >
+              {reminding ? "Skickar…" : "Skicka påminnelser nu"}
+            </button>
+          </div>
 
           {tournaments.length === 0 ? (
             <p className="text-gray-400 text-sm">Inga turneringar skapade ännu.</p>
