@@ -44,21 +44,21 @@ function ScoreButton({
   return (
     <div className="flex items-center gap-2">
       <button
-        onClick={() => onChange(Math.max(0, value - 1))}
-        disabled={disabled || value <= 0}
-        className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-lg font-bold hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-30 transition-colors"
-        aria-label="Minska"
-      >
-        −
-      </button>
-      <span className="w-8 text-center text-xl font-bold tabular-nums">{value}</span>
-      <button
         onClick={() => onChange(Math.min(99, value + 1))}
         disabled={disabled}
         className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-lg font-bold hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-30 transition-colors"
         aria-label="Öka"
       >
         +
+      </button>
+      <span className="w-8 text-center text-xl font-bold tabular-nums">{value}</span>
+      <button
+        onClick={() => onChange(Math.max(0, value - 1))}
+        disabled={disabled || value <= 0}
+        className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-lg font-bold hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-30 transition-colors"
+        aria-label="Minska"
+      >
+        −
       </button>
     </div>
   );
