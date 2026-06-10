@@ -44,6 +44,16 @@ export default async function HomePage() {
   const prizePool = acceptedCount * 50;
   let hasKnockout = false;
 
+  // Claudes senaste tips + statistik
+  type ClaudeTip = {
+    homeTeam: string; awayTeam: string; homeCode: string | null; awayCode: string | null;
+    homeScore: number; awayScore: number; analysis: string | null; startsAt: Date;
+  };
+  let claudeTip: ClaudeTip | null = null;
+  type ClaudeStats = { total: number; exact: number; outcome: number; points: number };
+  let claudeStats: ClaudeStats = { total: 0, exact: 0, outcome: 0, points: 0 };
+  const [claudeBot] = await db.select({ id: users.id }).from(users).where(eq(users.email, "claude@anthropic.com")).limit(1);
+
   if (tournament) {
     const topRows = await db
       .select({
@@ -102,6 +112,48 @@ export default async function HomePage() {
       .where(and(eq(phases.tournamentId, tournament.id), eq(phases.type, "knockout")))
       .limit(1);
     hasKnockout = !!knockoutPhase;
+
+    if (claudeBot) {
+      // Nästa match Claude har tippat
+      const now2 = new Date();
+      const [nextTip] = await db
+        .select({
+          homeScore: predictions.predictedHomeScore,
+          awayScore: predictions.predictedAwayScore,
+          analysis: predictions.analysis,
+          startsAt: matches.startsAt,
+          homeTeamId: matches.homeTeamId,
+          awayTeamId: matches.awayTeamId,
+        })
+        .from(predictions)
+        .innerJoin(matches, eq(predictions.matchId, matches.id))
+        .where(and(eq(predictions.userId, claudeBot.id), eq(predictions.tournamentId, tournament.id), gte(matches.startsAt, now2)))
+        .orderBy(asc(matches.startsAt))
+        .limit(1);
+
+      if (nextTip) {
+        const allTeams2 = await db.select().from(teams);
+        const tm = new Map(allTeams2.map(t => [t.id, t]));
+        const ht = nextTip.homeTeamId ? tm.get(nextTip.homeTeamId) : null;
+        const at = nextTip.awayTeamId ? tm.get(nextTip.awayTeamId) : null;
+        claudeTip = {
+          homeTeam: ht?.name ?? "?", awayTeam: at?.name ?? "?",
+          homeCode: ht?.countryCode ?? null, awayCode: at?.countryCode ?? null,
+          homeScore: nextTip.homeScore, awayScore: nextTip.awayScore,
+          analysis: nextTip.analysis, startsAt: nextTip.startsAt,
+        };
+      }
+
+      // Claudes statistik
+      const claudePreds = await db.select().from(predictions)
+        .where(and(eq(predictions.userId, claudeBot.id), eq(predictions.tournamentId, tournament.id)));
+      claudeStats = {
+        total: claudePreds.filter(p => p.points !== null).length,
+        exact: claudePreds.filter(p => p.isExactScore).length,
+        outcome: claudePreds.filter(p => p.isCorrectOutcome && !p.isExactScore).length,
+        points: claudePreds.reduce((sum, p) => sum + (p.points ?? 0), 0),
+      };
+    }
   }
 
   return (
@@ -275,6 +327,44 @@ export default async function HomePage() {
                       </span>
                     </Link>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {claudeTip && (
+              <div className="mt-8">
+                <h2 className="text-lg font-semibold mb-3">🤖 Claudes tips</h2>
+                <div className="bg-white dark:bg-gray-900 border border-purple-200 dark:border-purple-800 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-400">
+                      {new Date(claudeTip.startsAt).toLocaleDateString("sv-SE", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/Stockholm" })}
+                      {" "}
+                      {new Date(claudeTip.startsAt).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Stockholm" })}
+                    </span>
+                    {claudeStats.total > 0 && (
+                      <span className="text-xs text-gray-400">
+                        {claudeStats.points}p · {claudeStats.exact} exakta · {claudeStats.outcome} rätt utfall
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-center gap-3 my-3">
+                    <span className="flex items-center gap-1.5 font-semibold">
+                      <CountryFlag code={claudeTip.homeCode} size={20} />
+                      {claudeTip.homeTeam}
+                    </span>
+                    <span className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                      {claudeTip.homeScore}–{claudeTip.awayScore}
+                    </span>
+                    <span className="flex items-center gap-1.5 font-semibold">
+                      {claudeTip.awayTeam}
+                      <CountryFlag code={claudeTip.awayCode} size={20} />
+                    </span>
+                  </div>
+                  {claudeTip.analysis && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 italic border-t border-gray-100 dark:border-gray-800 pt-2 mt-2">
+                      "{claudeTip.analysis}"
+                    </p>
+                  )}
                 </div>
               </div>
             )}

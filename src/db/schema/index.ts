@@ -53,6 +53,7 @@ export const users = pgTable("users", {
   role: userRoleEnum("role").notNull().default("player"),
   profileComplete: boolean("profile_complete").notNull().default(false),
   hasAcceptedTerms: boolean("has_accepted_terms").notNull().default(false),
+  isBot: boolean("is_bot").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (t) => [uniqueIndex("users_email_idx").on(t.email)]);
@@ -170,6 +171,7 @@ export const predictions = pgTable("predictions", {
   points: integer("points"),
   isExactScore: boolean("is_exact_score"),
   isCorrectOutcome: boolean("is_correct_outcome"),
+  analysis: text("analysis"),
   lockedAt: timestamp("locked_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

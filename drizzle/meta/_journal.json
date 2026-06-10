@@ -50,6 +50,13 @@
       "when": 1780925639351,
       "tag": "0006_remove-has-paid",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781089317210,
+      "tag": "0007_add-bot-and-analysis",
+      "breakpoints": true
     }
   ]
 }
