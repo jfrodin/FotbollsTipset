@@ -51,8 +51,6 @@ export function AdminPanel({ tournaments, users, syncLogs, currentUserId }: Prop
   const [syncResult, setSyncResult] = useState<string | null>(null);
   const [reminding, setReminding] = useState(false);
   const [remindResult, setRemindResult] = useState<string | null>(null);
-  const [tipping, setTipping] = useState(false);
-  const [tipResult, setTipResult] = useState<string | null>(null);
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
   const [mailSubject, setMailSubject] = useState("");
   const [mailBody, setMailBody] = useState("");
@@ -107,26 +105,6 @@ export function AdminPanel({ tournaments, users, syncLogs, currentUserId }: Prop
     await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
     setDeletingUser(null);
     router.refresh();
-  }
-
-  async function generateClaudeTips() {
-    setTipping(true);
-    setTipResult(null);
-    try {
-      const res = await fetch("/api/admin/claude-tip", { method: "POST" });
-      const data = await res.json();
-      setTipResult(
-        res.ok
-          ? data.tipped === 0
-            ? `✓ ${data.message}`
-            : `✓ Claude tippade ${data.tipped} matcher`
-          : `✗ Fel: ${data.error}`
-      );
-    } catch {
-      setTipResult("✗ Nätverksfel");
-    } finally {
-      setTipping(false);
-    }
   }
 
   async function triggerReminders() {
@@ -207,13 +185,6 @@ export function AdminPanel({ tournaments, users, syncLogs, currentUserId }: Prop
           )}
           <div className="flex justify-end gap-2">
             <button
-              onClick={generateClaudeTips}
-              disabled={tipping}
-              className="px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium disabled:opacity-50 transition-colors"
-            >
-              {tipping ? "Genererar…" : "🤖 Generera Claudes tips"}
-            </button>
-            <button
               onClick={triggerReminders}
               disabled={reminding}
               className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium disabled:opacity-50 transition-colors"
@@ -221,11 +192,6 @@ export function AdminPanel({ tournaments, users, syncLogs, currentUserId }: Prop
               {reminding ? "Skickar…" : "Skicka påminnelser nu"}
             </button>
           </div>
-          {tipResult && (
-            <div className={`p-3 rounded-lg text-sm ${tipResult.startsWith("✓") ? "bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400" : "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400"}`}>
-              {tipResult}
-            </div>
-          )}
 
           {tournaments.length === 0 ? (
             <p className="text-gray-400 text-sm">Inga turneringar skapade ännu.</p>
