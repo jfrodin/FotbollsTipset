@@ -161,30 +161,30 @@ export function PredictionInput({ match }: PredictionInputProps) {
 
         {/* Finished/live: show result centered (same on all screen sizes) */}
         {match.status === "finished" || match.status === "live" ? (
-          <div className="flex items-center gap-3 w-full">
-            <div className="flex-1 flex items-center justify-end gap-2">
-              <CountryFlag code={match.homeTeam?.countryCode} size={24} />
-              <span className="font-semibold text-sm">{homeName}</span>
-            </div>
-            <div className="text-center shrink-0">
-              <div className="text-lg font-bold">
+          <div className="w-full">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 flex items-center justify-end gap-2">
+                <CountryFlag code={match.homeTeam?.countryCode} size={24} />
+                <span className="font-semibold text-sm">{homeName}</span>
+              </div>
+              <div className="text-lg font-bold shrink-0 text-center">
                 {match.homeScore ?? "–"} – {match.awayScore ?? "–"}
               </div>
-              {match.userPrediction && (
-                <div className="text-xs text-gray-400 mt-0.5">
-                  Tip: {match.userPrediction.predictedHomeScore}–{match.userPrediction.predictedAwayScore}
-                  {match.userPrediction.points !== null && (
-                    <span className="ml-1 font-semibold text-green-600 dark:text-green-400">
-                      {match.userPrediction.points}p
-                    </span>
-                  )}
-                </div>
-              )}
+              <div className="flex-1 flex items-center gap-2">
+                <span className="font-semibold text-sm">{awayName}</span>
+                <CountryFlag code={match.awayTeam?.countryCode} size={24} />
+              </div>
             </div>
-            <div className="flex-1 flex items-center gap-2">
-              <span className="font-semibold text-sm">{awayName}</span>
-              <CountryFlag code={match.awayTeam?.countryCode} size={24} />
-            </div>
+            {match.userPrediction && (
+              <div className="text-xs text-gray-400 mt-1.5 text-center">
+                Ditt tips: {match.userPrediction.predictedHomeScore}–{match.userPrediction.predictedAwayScore}
+                {match.userPrediction.points !== null && (
+                  <span className="ml-1 font-semibold text-green-600 dark:text-green-400">
+                    · {match.userPrediction.points}p
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         ) : locked ? (
           <div className="flex items-center gap-3 w-full">
