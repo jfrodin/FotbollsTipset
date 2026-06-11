@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { tournaments } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { syncTournament } from "@/lib/sync";
 
 export async function GET(req: NextRequest) {
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
   const activeTournaments = await db
     .select()
     .from(tournaments)
-    .where(eq(tournaments.status, "active"));
+    .where(inArray(tournaments.status, ["active", "open"]));
 
   const results = await Promise.allSettled(
     activeTournaments.map((t) => syncTournament(t.id))

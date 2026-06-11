@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { matches, users, predictions } from "@/db/schema";
+import { matches, users, predictions, syncLogs } from "@/db/schema";
 import { and, eq, gte, lte, inArray } from "drizzle-orm";
 import { sendReminderEmail } from "@/lib/email/resend";
 
@@ -56,6 +56,16 @@ export async function POST(req: NextRequest) {
       reminded++;
     }
   }
+
+  await db.insert(syncLogs).values({
+    provider: "remind",
+    status: "success",
+    message: `${reminded} påminnelser skickade för ${upcomingMatches.length} kommande matcher`,
+    matchesUpdated: upcomingMatches.length,
+    predictionsScored: reminded,
+    startedAt: now,
+    finishedAt: new Date(),
+  });
 
   return NextResponse.json({ reminded, matches: upcomingMatches.length });
 }
