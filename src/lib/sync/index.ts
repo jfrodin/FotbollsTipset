@@ -62,6 +62,7 @@ export async function syncTournament(tournamentId: string): Promise<SyncResult> 
     const apiTeams = await fetchTeams(leagueId, season);
     for (const { team } of apiTeams) {
       const countryCode = COUNTRY_NAME_TO_ISO[team.country] ?? team.country;
+      const mappedCode = COUNTRY_NAME_TO_ISO[team.country];
       const svName = TEAM_NAME_TO_SV[team.name] ?? team.name;
       await db
         .insert(teams)
@@ -77,7 +78,7 @@ export async function syncTournament(tournamentId: string): Promise<SyncResult> 
           set: {
             name: svName,
             shortName: team.code,
-            countryCode,
+            ...(mappedCode ? { countryCode: mappedCode } : {}),
             logoUrl: team.logo,
           },
         });

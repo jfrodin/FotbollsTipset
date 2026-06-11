@@ -161,7 +161,7 @@ export function PredictionInput({ match }: PredictionInputProps) {
 
         {/* Finished/live: show result centered (same on all screen sizes) */}
         {match.status === "finished" || match.status === "live" ? (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full">
             <div className="flex-1 flex items-center justify-end gap-2">
               <CountryFlag code={match.homeTeam?.countryCode} size={24} />
               <span className="font-semibold text-sm">{homeName}</span>
@@ -187,7 +187,7 @@ export function PredictionInput({ match }: PredictionInputProps) {
             </div>
           </div>
         ) : locked ? (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-full">
             <div className="flex-1 flex items-center justify-end gap-2">
               <CountryFlag code={match.homeTeam?.countryCode} size={24} />
               <span className="font-semibold text-sm">{homeName}</span>
