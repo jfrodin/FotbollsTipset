@@ -156,17 +156,17 @@ export function PredictionInput({ match }: PredictionInputProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        {/* Home team */}
-        <div className="flex-1 flex items-center justify-end gap-2">
-          <CountryFlag code={match.homeTeam?.countryCode} size={24} />
-          <span className="font-semibold text-sm">{homeName}</span>
-        </div>
+      {/* Mobile: vertical stack. Desktop: horizontal row */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3">
 
-        {/* Score / prediction */}
-        <div className="flex items-center gap-2 shrink-0">
-          {match.status === "finished" || match.status === "live" ? (
-            <div className="text-center">
+        {/* Finished/live: show result centered (same on all screen sizes) */}
+        {match.status === "finished" || match.status === "live" ? (
+          <div className="flex items-center gap-3">
+            <div className="flex-1 flex items-center justify-end gap-2">
+              <CountryFlag code={match.homeTeam?.countryCode} size={24} />
+              <span className="font-semibold text-sm">{homeName}</span>
+            </div>
+            <div className="text-center shrink-0">
               <div className="text-lg font-bold">
                 {match.homeScore ?? "–"} – {match.awayScore ?? "–"}
               </div>
@@ -181,26 +181,59 @@ export function PredictionInput({ match }: PredictionInputProps) {
                 </div>
               )}
             </div>
-          ) : locked ? (
-            <div className="text-center text-sm text-gray-400">
+            <div className="flex-1 flex items-center gap-2">
+              <span className="font-semibold text-sm">{awayName}</span>
+              <CountryFlag code={match.awayTeam?.countryCode} size={24} />
+            </div>
+          </div>
+        ) : locked ? (
+          <div className="flex items-center gap-3">
+            <div className="flex-1 flex items-center justify-end gap-2">
+              <CountryFlag code={match.homeTeam?.countryCode} size={24} />
+              <span className="font-semibold text-sm">{homeName}</span>
+            </div>
+            <div className="text-center text-sm text-gray-400 shrink-0">
               {match.userPrediction
                 ? `${match.userPrediction.predictedHomeScore} – ${match.userPrediction.predictedAwayScore}`
                 : "Ej tippat"}
             </div>
-          ) : (
-            <div className="flex items-center gap-1">
-              <ScoreButton value={homeScore} onChange={setHomeScore} disabled={locked || saving} />
-              <span className="font-bold text-gray-400 mx-1">–</span>
-              <ScoreButton value={awayScore} onChange={setAwayScore} disabled={locked || saving} />
+            <div className="flex-1 flex items-center gap-2">
+              <span className="font-semibold text-sm">{awayName}</span>
+              <CountryFlag code={match.awayTeam?.countryCode} size={24} />
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <>
+            {/* Home team row */}
+            <div className="flex items-center justify-between sm:flex-1 sm:justify-end sm:gap-2">
+              <div className="flex items-center gap-2">
+                <CountryFlag code={match.homeTeam?.countryCode} size={24} />
+                <span className="font-semibold text-sm">{homeName}</span>
+              </div>
+              <div className="sm:hidden">
+                <ScoreButton value={homeScore} onChange={setHomeScore} disabled={saving} />
+              </div>
+            </div>
 
-        {/* Away team */}
-        <div className="flex-1 flex items-center gap-2">
-          <span className="font-semibold text-sm">{awayName}</span>
-          <CountryFlag code={match.awayTeam?.countryCode} size={24} />
-        </div>
+            {/* Desktop center score */}
+            <div className="hidden sm:flex items-center gap-1 shrink-0">
+              <ScoreButton value={homeScore} onChange={setHomeScore} disabled={saving} />
+              <span className="font-bold text-gray-400 mx-1">–</span>
+              <ScoreButton value={awayScore} onChange={setAwayScore} disabled={saving} />
+            </div>
+
+            {/* Away team row */}
+            <div className="flex items-center justify-between sm:flex-1 sm:gap-2">
+              <div className="flex items-center gap-2">
+                <CountryFlag code={match.awayTeam?.countryCode} size={24} />
+                <span className="font-semibold text-sm">{awayName}</span>
+              </div>
+              <div className="sm:hidden">
+                <ScoreButton value={awayScore} onChange={setAwayScore} disabled={saving} />
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {!locked && (
