@@ -9,10 +9,10 @@ import { fetchStandings } from "@/lib/football-api/api-football";
 import { toSwedish } from "@/lib/team-names";
 
 function toSwedishGroup(name: string): string {
-  return name
-    .replace(/^Group\s+/, "Grupp ")
-    .replace("Third placed teams", "Bästa grupptreor")
-    .replace("Ranking of third-placed teams", "Bästa grupptreor");
+  if (!name) return name;
+  const lower = name.toLowerCase();
+  if (lower.includes("third") || lower.includes("3rd")) return "Bästa grupptreor";
+  return name.replace(/^Group\s+/i, "Grupp ");
 }
 import Image from "next/image";
 
@@ -41,10 +41,12 @@ export default async function StandingsPage({ params }: Props) {
     try {
       const data = await fetchStandings(tournament.externalId, tournament.year);
       const standings = data[0]?.league?.standings ?? [];
-      groups = standings.map((group) => ({
-        name: group[0]?.group ?? "",
-        entries: group,
-      }));
+      groups = standings
+        .filter((group) => group.length > 0)
+        .map((group) => ({
+          name: group[0]?.group ?? group[0]?.description ?? `Grupp ${group[0]?.rank ?? ""}`,
+          entries: group,
+        }));
     } catch {
       error = true;
     }
