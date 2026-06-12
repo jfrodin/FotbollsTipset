@@ -8,10 +8,14 @@ import { eq } from "drizzle-orm";
 import { fetchStandings } from "@/lib/football-api/api-football";
 import { toSwedish } from "@/lib/team-names";
 
-function toSwedishGroup(name: string): string {
+function toSwedishGroup(name: string, size?: number): string {
   if (!name) return name;
   const lower = name.toLowerCase();
   if (lower.includes("third") || lower.includes("3rd")) return "Bästa grupptreor";
+  // "Group Stage" utan bokstav = bästa treor
+  if (/^group stage$/i.test(name.trim())) return "Bästa grupptreor";
+  // Stor grupp utan bokstav = bästa treor
+  if (size && size > 6) return "Bästa grupptreor";
   // "Group Stage - Group A" → "Grupp A"
   const stageMatch = name.match(/Group Stage\s*-\s*Group\s+(\w+)/i);
   if (stageMatch) return `Grupp ${stageMatch[1]}`;
@@ -96,7 +100,7 @@ export default async function StandingsPage({ params }: Props) {
             <div key={group.name} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
               <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                 <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  {toSwedishGroup(group.name)}
+                  {toSwedishGroup(group.name, group.entries.length)}
                 </span>
               </div>
               <table className="w-full text-sm">
