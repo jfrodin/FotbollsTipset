@@ -12,7 +12,20 @@ function toSwedishGroup(name: string): string {
   if (!name) return name;
   const lower = name.toLowerCase();
   if (lower.includes("third") || lower.includes("3rd")) return "Bästa grupptreor";
+  // "Group Stage - Group A" → "Grupp A"
+  const stageMatch = name.match(/Group Stage\s*-\s*Group\s+(\w+)/i);
+  if (stageMatch) return `Grupp ${stageMatch[1]}`;
+  // "Group A" → "Grupp A"
   return name.replace(/^Group\s+/i, "Grupp ");
+}
+
+function isThirdPlacedGroup(name: string, size: number): boolean {
+  // Bästa treor-gruppen har fler lag än en vanlig grupp (12 lag i VM 2026)
+  // eller saknar gruppbokstav
+  if (name.toLowerCase().includes("third") || name.toLowerCase().includes("3rd")) return true;
+  if (size > 6) return true;
+  const hasLetter = /Group Stage\s*-\s*Group\s+\w+/i.test(name) || /^Group\s+[A-Z]$/i.test(name);
+  return !hasLetter && name.toLowerCase().includes("group stage");
 }
 import Image from "next/image";
 
@@ -103,7 +116,7 @@ export default async function StandingsPage({ params }: Props) {
                 </thead>
                 <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                   {group.entries.map((entry, idx) => (
-                    <tr key={entry.team.id} className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 ${group.name.toLowerCase().includes("third") && idx === 7 ? "border-b-2 border-green-400 dark:border-green-600" : ""}`}>
+                    <tr key={entry.team.id} className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 ${isThirdPlacedGroup(group.name, group.entries.length) && idx === 7 ? "border-b-2 border-green-400 dark:border-green-600" : ""}`}>
                       <td className="px-3 py-2 text-gray-400 text-xs">{entry.rank}</td>
                       <td className="px-3 py-2">
                         <span className="flex items-center gap-2">
