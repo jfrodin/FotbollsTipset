@@ -3,6 +3,14 @@
 import { useState } from "react";
 import { CountryFlag } from "./CountryFlag";
 
+interface OtherPrediction {
+  userId: string;
+  displayName: string;
+  predictedHomeScore: number;
+  predictedAwayScore: number;
+  points: number | null;
+}
+
 interface Match {
   id: string;
   tournamentId: string;
@@ -101,6 +109,22 @@ export function PredictionInput({ match }: PredictionInputProps) {
   const [savedAway, setSavedAway] = useState(match.userPrediction?.predictedAwayScore ?? null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showOthers, setShowOthers] = useState(false);
+  const [others, setOthers] = useState<OtherPrediction[] | null>(null);
+  const [loadingOthers, setLoadingOthers] = useState(false);
+
+  async function toggleOthers() {
+    if (showOthers) { setShowOthers(false); return; }
+    if (others !== null) { setShowOthers(true); return; }
+    setLoadingOthers(true);
+    try {
+      const res = await fetch(`/api/matches/${match.id}/predictions`);
+      if (res.ok) setOthers(await res.json());
+    } finally {
+      setLoadingOthers(false);
+      setShowOthers(true);
+    }
+  }
 
   async function save() {
     setSaving(true);
@@ -252,6 +276,36 @@ export function PredictionInput({ match }: PredictionInputProps) {
               </button>
             )}
           </div>
+        </div>
+      )}
+
+      {locked && (
+        <div className="mt-3">
+          <button
+            onClick={toggleOthers}
+            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
+            {loadingOthers ? "Laddar…" : showOthers ? "▲ Dölj tips" : `▼ Visa vad alla tippade`}
+          </button>
+          {showOthers && others && (
+            <div className="mt-2 divide-y divide-gray-100 dark:divide-gray-800 border border-gray-100 dark:border-gray-800 rounded-lg overflow-hidden">
+              {others.length === 0 ? (
+                <p className="text-xs text-gray-400 px-3 py-2">Ingen har tippat denna match.</p>
+              ) : (
+                others.map((o) => (
+                  <div key={o.userId} className="flex items-center justify-between px-3 py-1.5 text-xs">
+                    <span className="text-gray-600 dark:text-gray-400">{o.displayName}</span>
+                    <span className="font-medium tabular-nums">
+                      {o.predictedHomeScore}–{o.predictedAwayScore}
+                      {o.points !== null && (
+                        <span className="ml-1.5 text-green-600 dark:text-green-400 font-semibold">{o.points}p</span>
+                      )}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
