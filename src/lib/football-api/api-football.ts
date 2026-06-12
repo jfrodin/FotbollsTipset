@@ -55,5 +55,6 @@ export interface ApiFootballStandingEntry {
   points: number;
   goalsDiff: number;
   group: string;
+  description?: string;
   all: { played: number; win: number; draw: number; lose: number; goals: { for: number; against: number } };
 }
