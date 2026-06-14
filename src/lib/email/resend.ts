@@ -22,7 +22,7 @@ export async function sendReminderEmail(email: string, name: string, matchCount:
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px">
         <h2 style="margin:0 0 8px">FotbollsTipset</h2>
         <p>Hej ${name}!</p>
-        <p>Du har <strong>${matchCount} match${matchCount !== 1 ? "er" : ""}</strong> att tippa som startar inom 2 timmar.</p>
+        <p>Du har <strong>${matchCount} otippad${matchCount !== 1 ? "e matcher" : " match"}</strong> som startar inom de närmaste 12 timmarna.</p>
         <a href="${process.env.APP_URL}" style="display:inline-block;margin-top:16px;padding:12px 24px;background:#16a34a;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold">
           Tippa nu →
         </a>
