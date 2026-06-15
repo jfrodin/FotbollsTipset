@@ -1,1 +1,1 @@
-ALTER TABLE "tournaments" ADD COLUMN "notice" text;
+ALTER TABLE "tournaments" ADD COLUMN IF NOT EXISTS "notice" text;
