@@ -5,8 +5,29 @@ import Link from "next/link";
 import { db } from "@/db";
 import { tournaments } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { fetchStandings } from "@/lib/football-api/api-football";
-import { toSwedish } from "@/lib/team-names";
+import {
+  fetchStandings,
+  fetchTopScorers,
+  fetchTopAssists,
+  fetchTopYellowCards,
+  fetchTopRedCards,
+  type ApiFootballStandingEntry,
+} from "@/lib/football-api/api-football";
+import { TournamentInfo } from "@/components/TournamentInfo";
+
+interface Props {
+  params: Promise<{ id: string }>;
+}
+
+// VM 2026 Round of 32 bracket (based on FIFA draw format)
+// Format: [homeGroupPos, awayGroupPos] e.g. ["A1", "B2"]
+const VM2026_BRACKET: [string, string][] = [
+  ["A1", "B2"], ["C1", "D2"], ["E1", "F2"], ["G1", "H2"],
+  ["I1", "J2"], ["K1", "L2"], ["A2", "B1"], ["C2", "D1"],
+  ["E2", "F1"], ["G2", "H1"], ["I2", "J1"], ["K2", "L1"],
+  ["3rd-1", "3rd-2"], ["3rd-3", "3rd-4"],
+  ["3rd-5", "3rd-6"], ["3rd-7", "3rd-8"],
+];
 
 function toSwedishGroup(name: string, size?: number): string {
   if (!name) return name;
@@ -23,10 +44,14 @@ function isThirdPlacedGroup(name: string, size: number): boolean {
   if (size > 12) return true;
   return name.toLowerCase().includes("third") || name.toLowerCase().includes("3rd") || /^group stage$/i.test(name.trim());
 }
-import Image from "next/image";
 
-interface Props {
-  params: Promise<{ id: string }>;
+function dedup(entries: ApiFootballStandingEntry[]): ApiFootballStandingEntry[] {
+  const seen = new Set<number>();
+  return entries.filter((e) => {
+    if (seen.has(e.team.id)) return false;
+    seen.add(e.team.id);
+    return true;
+  });
 }
 
 export default async function StandingsPage({ params }: Props) {
@@ -43,31 +68,70 @@ export default async function StandingsPage({ params }: Props) {
 
   if (!tournament) redirect("/");
 
-  let groups: { name: string; entries: Awaited<ReturnType<typeof fetchStandings>>[0]["league"]["standings"][0] }[] = [];
-  let error = false;
+  // Fetch all data in parallel
+  const [standingsData, topScorers, topAssists, topYellow, topRed] = await Promise.allSettled([
+    tournament.externalId ? fetchStandings(tournament.externalId, tournament.year) : Promise.resolve([]),
+    tournament.externalId ? fetchTopScorers(tournament.externalId, tournament.year) : Promise.resolve([]),
+    tournament.externalId ? fetchTopAssists(tournament.externalId, tournament.year) : Promise.resolve([]),
+    tournament.externalId ? fetchTopYellowCards(tournament.externalId, tournament.year) : Promise.resolve([]),
+    tournament.externalId ? fetchTopRedCards(tournament.externalId, tournament.year) : Promise.resolve([]),
+  ]);
 
-  if (tournament.externalId && tournament.apiProvider) {
-    try {
-      const data = await fetchStandings(tournament.externalId, tournament.year);
-      const standings = data[0]?.league?.standings ?? [];
-      groups = standings
-        .filter((group) => group.length > 0)
-        .map((group) => {
-          const seen = new Set<number>();
-          const unique = group.filter((e) => {
-            if (seen.has(e.team.id)) return false;
-            seen.add(e.team.id);
-            return true;
-          });
-          return {
-            name: group[0]?.group ?? group[0]?.description ?? `Grupp ${group[0]?.rank ?? ""}`,
-            entries: unique,
-          };
+  const standings = standingsData.status === "fulfilled" ? standingsData.value : [];
+  const rawStandings = standings[0]?.league?.standings ?? [];
+
+  const groups = rawStandings
+    .filter((g) => g.length > 0)
+    .map((g) => {
+      const unique = dedup(g);
+      const name = g[0]?.group ?? "";
+      const swedishName = toSwedishGroup(name, unique.length);
+      return {
+        name,
+        swedishName,
+        isThird: isThirdPlacedGroup(name, unique.length),
+        entries: unique,
+      };
+    });
+
+  // Build bracket from current standings
+  // Create a map: "A1" → team, "A2" → team, etc.
+  const positionMap = new Map<string, { name: string; logo: string }>();
+  const thirdPlaced: { team: { name: string; logo: string }; points: number; goalsDiff: number; goals: number }[] = [];
+
+  for (const group of groups) {
+    if (group.isThird) {
+      for (const entry of group.entries) {
+        thirdPlaced.push({
+          team: entry.team,
+          points: entry.points,
+          goalsDiff: entry.goalsDiff,
+          goals: entry.all.goals.for,
         });
-    } catch {
-      error = true;
+      }
+      continue;
+    }
+    const letter = group.name.replace(/^Group\s+/i, "").replace(/^Group Stage\s*-\s*Group\s+/i, "");
+    for (const entry of group.entries) {
+      positionMap.set(`${letter}${entry.rank}`, entry.team);
     }
   }
+
+  // Sort third-placed teams
+  thirdPlaced.sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
+    if (b.goalsDiff !== a.goalsDiff) return b.goalsDiff - a.goalsDiff;
+    return b.goals - a.goals;
+  });
+
+  thirdPlaced.forEach((t, i) => {
+    positionMap.set(`3rd-${i + 1}`, t.team);
+  });
+
+  const bracket = VM2026_BRACKET.map(([h, a]) => ({
+    home: { label: h, team: positionMap.get(h) ?? null },
+    away: { label: a, team: positionMap.get(a) ?? null },
+  }));
 
   return (
     <>
@@ -78,71 +142,17 @@ export default async function StandingsPage({ params }: Props) {
             ← Hem
           </Link>
           <span className="text-gray-300 dark:text-gray-600">/</span>
-          <h1 className="text-xl font-bold">Gruppställningar</h1>
+          <h1 className="text-xl font-bold">VM</h1>
         </div>
 
-        {error && (
-          <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6 text-sm text-red-600 dark:text-red-400">
-            Kunde inte hämta ställningar just nu. Försök igen senare.
-          </div>
-        )}
-
-{!error && groups.length === 0 && (
-          <div className="text-center py-16 text-gray-400">
-            <div className="text-4xl mb-3">📊</div>
-            <p className="font-medium text-gray-600 dark:text-gray-300">Inga ställningar tillgängliga än.</p>
-            <p className="text-sm mt-1">Visas här när turneringen har startat.</p>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {groups.map((group) => (
-            <div key={group.name} className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
-              <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                <span className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  {toSwedishGroup(group.name, group.entries.length)}
-                </span>
-              </div>
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-xs text-gray-400 border-b border-gray-100 dark:border-gray-800">
-                    <th className="text-left px-3 py-1.5 w-6">#</th>
-                    <th className="text-left px-3 py-1.5">Lag</th>
-                    <th className="text-center px-2 py-1.5">S</th>
-                    <th className="text-center px-2 py-1.5">V</th>
-                    <th className="text-center px-2 py-1.5">O</th>
-                    <th className="text-center px-2 py-1.5">F</th>
-                    <th className="text-center px-2 py-1.5 hidden sm:table-cell">GM</th>
-                    <th className="text-center px-2 py-1.5 hidden sm:table-cell">IM</th>
-                    <th className="text-center px-2 py-1.5">+/-</th>
-                    <th className="text-right px-3 py-1.5 font-bold text-gray-500">P</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
-                  {group.entries.map((entry, idx) => (
-                    <tr key={entry.team.id} className={`hover:bg-gray-50 dark:hover:bg-gray-800/50 ${isThirdPlacedGroup(group.name, group.entries.length) && idx === 7 ? "border-b-2 border-green-400 dark:border-green-600" : ""}`}>
-                      <td className="px-3 py-2 text-gray-400 text-xs">{entry.rank}</td>
-                      <td className="px-3 py-2">
-                        <span className="flex items-center gap-2">
-                          <Image src={entry.team.logo} alt={entry.team.name} width={16} height={16} unoptimized />
-                          <span className="font-medium truncate">{toSwedish(entry.team.name)}</span>
-                        </span>
-                      </td>
-                      <td className="text-center px-2 py-2 text-gray-500">{entry.all.played}</td>
-                      <td className="text-center px-2 py-2 text-gray-500">{entry.all.win}</td>
-                      <td className="text-center px-2 py-2 text-gray-500">{entry.all.draw}</td>
-                      <td className="text-center px-2 py-2 text-gray-500">{entry.all.lose}</td>
-                      <td className="text-center px-2 py-2 text-gray-500 hidden sm:table-cell">{entry.all.goals.for}</td>
-                      <td className="text-center px-2 py-2 text-gray-500 hidden sm:table-cell">{entry.all.goals.against}</td>
-                      <td className={`text-center px-2 py-2 font-medium ${entry.goalsDiff > 0 ? "text-green-600 dark:text-green-400" : entry.goalsDiff < 0 ? "text-red-500" : "text-gray-500"}`}>{entry.goalsDiff > 0 ? `+${entry.goalsDiff}` : entry.goalsDiff}</td>
-                      <td className="text-right px-3 py-2 font-bold">{entry.points}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ))}
-        </div>
+        <TournamentInfo
+          groups={groups}
+          topScorers={topScorers.status === "fulfilled" ? topScorers.value : []}
+          topAssists={topAssists.status === "fulfilled" ? topAssists.value : []}
+          topYellow={topYellow.status === "fulfilled" ? topYellow.value : []}
+          topRed={topRed.status === "fulfilled" ? topRed.value : []}
+          bracket={bracket}
+        />
       </main>
     </>
   );

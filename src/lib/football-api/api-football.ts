@@ -58,3 +58,28 @@ export interface ApiFootballStandingEntry {
   description?: string;
   all: { played: number; win: number; draw: number; lose: number; goals: { for: number; against: number } };
 }
+
+export interface ApiFootballTopScorer {
+  player: { id: number; name: string; photo: string; nationality: string };
+  statistics: [{
+    team: { id: number; name: string; logo: string };
+    goals: { total: number | null; assists: number | null };
+    cards: { yellow: number; red: number };
+  }];
+}
+
+export async function fetchTopScorers(leagueId: string, season: number): Promise<ApiFootballTopScorer[]> {
+  return apiFetch<ApiFootballTopScorer[]>(`/players/topscorers?league=${leagueId}&season=${season}`);
+}
+
+export async function fetchTopAssists(leagueId: string, season: number): Promise<ApiFootballTopScorer[]> {
+  return apiFetch<ApiFootballTopScorer[]>(`/players/topassists?league=${leagueId}&season=${season}`);
+}
+
+export async function fetchTopYellowCards(leagueId: string, season: number): Promise<ApiFootballTopScorer[]> {
+  return apiFetch<ApiFootballTopScorer[]>(`/players/topyellowcards?league=${leagueId}&season=${season}`);
+}
+
+export async function fetchTopRedCards(leagueId: string, season: number): Promise<ApiFootballTopScorer[]> {
+  return apiFetch<ApiFootballTopScorer[]>(`/players/topredcards?league=${leagueId}&season=${season}`);
+}

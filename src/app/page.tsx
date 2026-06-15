@@ -217,9 +217,9 @@ export default async function HomePage() {
               >
                 <div className="text-3xl mb-2">🌍</div>
                 <div className="font-semibold group-hover:text-green-600 dark:group-hover:text-green-400 transition-colors">
-                  VM-ställning
+                  VM
                 </div>
-                <div className="text-sm text-gray-500 mt-0.5">Grupperna i VM</div>
+                <div className="text-sm text-gray-500 mt-0.5">Grupper, träd & statistik</div>
               </Link>
             </div>
 
