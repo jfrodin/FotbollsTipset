@@ -14,6 +14,7 @@ const updateSchema = z.object({
   endsAt: z.string().optional(),
   pointsForCorrectOutcome: z.number().int().optional(),
   pointsForExactScore: z.number().int().optional(),
+  notice: z.string().nullable().optional(),
 });
 
 export async function PATCH(

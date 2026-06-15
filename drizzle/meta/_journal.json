@@ -57,6 +57,13 @@
       "when": 1781089317210,
       "tag": "0007_add-bot-and-analysis",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781499153738,
+      "tag": "0008_glorious_sir_ram",
+      "breakpoints": true
     }
   ]
 }

@@ -91,6 +91,7 @@ export const tournaments = pgTable("tournaments", {
   endsAt: timestamp("ends_at"),
   apiProvider: text("api_provider"),
   externalId: text("external_id"),
+  notice: text("notice"),
   pointsForCorrectOutcome: integer("points_for_correct_outcome").notNull().default(2),
   pointsForExactScore: integer("points_for_exact_score").notNull().default(3),
   createdAt: timestamp("created_at").notNull().defaultNow(),

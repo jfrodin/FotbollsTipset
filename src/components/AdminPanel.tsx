@@ -10,6 +10,7 @@ interface Tournament {
   status: string;
   apiProvider: string | null;
   externalId: string | null;
+  notice: string | null;
 }
 
 interface User {
@@ -56,6 +57,8 @@ export function AdminPanel({ tournaments, users, syncLogs, currentUserId }: Prop
   const [mailBody, setMailBody] = useState("");
   const [sending, setSending] = useState(false);
   const [mailResult, setMailResult] = useState<string | null>(null);
+  const [noticeText, setNoticeText] = useState<Record<string, string>>({});
+  const [savingNotice, setSavingNotice] = useState<string | null>(null);
 
   async function triggerSync(tournamentId: string) {
     setSyncing(tournamentId);
@@ -86,6 +89,17 @@ export function AdminPanel({ tournaments, users, syncLogs, currentUserId }: Prop
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
+    router.refresh();
+  }
+
+  async function publishNotice(id: string, notice: string | null) {
+    setSavingNotice(id);
+    await fetch(`/api/admin/tournaments/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ notice }),
+    });
+    setSavingNotice(null);
     router.refresh();
   }
 
@@ -222,6 +236,39 @@ export function AdminPanel({ tournaments, users, syncLogs, currentUserId }: Prop
                       className="px-3 py-1 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-medium disabled:opacity-50 transition-colors"
                     >
                       {syncing === t.id ? "Synkar…" : "Synka nu"}
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-3 border-t border-gray-100 dark:border-gray-800 pt-3">
+                  <p className="text-xs text-gray-500 mb-1.5 font-medium">Notis på startsidan</p>
+                  {t.notice && (
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded px-2 py-1 flex-1">
+                        📢 {t.notice}
+                      </span>
+                      <button
+                        onClick={() => publishNotice(t.id, null)}
+                        disabled={savingNotice === t.id}
+                        className="text-xs text-red-500 hover:text-red-700 disabled:opacity-40 shrink-0"
+                      >
+                        Ta bort
+                      </button>
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder={t.notice ? "Skriv nytt meddelande…" : "Skriv ett meddelande…"}
+                      value={noticeText[t.id] ?? ""}
+                      onChange={(e) => setNoticeText((p) => ({ ...p, [t.id]: e.target.value }))}
+                      className="flex-1 text-xs px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                    <button
+                      onClick={() => { publishNotice(t.id, noticeText[t.id] ?? ""); setNoticeText((p) => ({ ...p, [t.id]: "" })); }}
+                      disabled={savingNotice === t.id || !noticeText[t.id]?.trim()}
+                      className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium disabled:opacity-50 transition-colors"
+                    >
+                      {savingNotice === t.id ? "Sparar…" : "Publicera"}
                     </button>
                   </div>
                 </div>

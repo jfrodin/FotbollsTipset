@@ -137,6 +137,12 @@ export default async function HomePage() {
       </div>
 
       <main className="max-w-4xl mx-auto px-4 py-8 flex-1 w-full">
+        {tournament?.notice && (
+          <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-6">
+            <span className="text-blue-700 dark:text-blue-300 text-sm">ℹ️ {tournament.notice}</span>
+          </div>
+        )}
+
         {tournament && (
           <>
             {pendingCount > 0 && (
