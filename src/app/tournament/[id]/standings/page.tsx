@@ -52,10 +52,18 @@ export default async function StandingsPage({ params }: Props) {
       const standings = data[0]?.league?.standings ?? [];
       groups = standings
         .filter((group) => group.length > 0)
-        .map((group) => ({
-          name: group[0]?.group ?? group[0]?.description ?? `Grupp ${group[0]?.rank ?? ""}`,
-          entries: group,
-        }));
+        .map((group) => {
+          const seen = new Set<number>();
+          const unique = group.filter((e) => {
+            if (seen.has(e.team.id)) return false;
+            seen.add(e.team.id);
+            return true;
+          });
+          return {
+            name: group[0]?.group ?? group[0]?.description ?? `Grupp ${group[0]?.rank ?? ""}`,
+            entries: unique,
+          };
+        });
     } catch {
       error = true;
     }
