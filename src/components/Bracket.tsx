@@ -156,11 +156,11 @@ export function Bracket({ r32Matches }: { r32Matches: BracketMatchData[] }) {
 
         {/* ── RIGHT HALF: SF → QF → R16 → R32 ── */}
         <SFtoFinal />
-        <Col matches={sf}       round={3} />
+        <Col matches={sf}       round={3} label="Semifinal" />
         <ConnSVG fromRound={2} count={2} flip />
-        <Col matches={qf}       round={2} />
+        <Col matches={qf}       round={2} label="Kvartsfinaler" />
         <ConnSVG fromRound={1} count={4} flip />
-        <Col matches={r16}      round={1} />
+        <Col matches={r16}      round={1} label="Åttondelar" />
         <ConnSVG fromRound={0} count={8} flip />
         <Col matches={rightR32} round={0} label="Sextondelar" />
 
