@@ -81,6 +81,12 @@ export default async function StandingsPage({ params }: Props) {
           </div>
         )}
 
+        {groups.length > 0 && (
+          <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono text-gray-500 overflow-x-auto">
+            {groups.map(g => `"${g.name}" (${g.entries.length})`).join(" | ")}
+          </div>
+        )}
+
         {!error && groups.length === 0 && (
           <div className="text-center py-16 text-gray-400">
             <div className="text-4xl mb-3">📊</div>
