@@ -75,7 +75,7 @@ function StatList({ players, valueKey, label }: {
             <Image src={p.player.photo} alt={p.player.name} width={28} height={28} className="rounded-full" unoptimized />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{p.player.name}</p>
-              <p className="text-xs text-gray-400 truncate">{p.statistics[0]?.team?.name}</p>
+              <p className="text-xs text-gray-400 truncate">{toSwedish(p.statistics[0]?.team?.name ?? "")}</p>
             </div>
             <span className="font-bold text-lg tabular-nums">{getValue(p)}</span>
           </div>
