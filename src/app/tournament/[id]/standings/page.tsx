@@ -10,12 +10,10 @@ import { toSwedish } from "@/lib/team-names";
 
 function toSwedishGroup(name: string, size?: number): string {
   if (!name) return name;
+  // Bästa treor identifieras enbart på storlek (12 lag i VM 2026) eller om "third" finns i namnet
+  if (size && size > 6) return "Bästa grupptreor";
   const lower = name.toLowerCase();
   if (lower.includes("third") || lower.includes("3rd")) return "Bästa grupptreor";
-  // "Group Stage" utan bokstav = bästa treor
-  if (/^group stage$/i.test(name.trim())) return "Bästa grupptreor";
-  // Stor grupp utan bokstav = bästa treor
-  if (size && size > 6) return "Bästa grupptreor";
   // "Group Stage - Group A" → "Grupp A"
   const stageMatch = name.match(/Group Stage\s*-\s*Group\s+(\w+)/i);
   if (stageMatch) return `Grupp ${stageMatch[1]}`;
@@ -24,12 +22,8 @@ function toSwedishGroup(name: string, size?: number): string {
 }
 
 function isThirdPlacedGroup(name: string, size: number): boolean {
-  // Bästa treor-gruppen har fler lag än en vanlig grupp (12 lag i VM 2026)
-  // eller saknar gruppbokstav
-  if (name.toLowerCase().includes("third") || name.toLowerCase().includes("3rd")) return true;
   if (size > 6) return true;
-  const hasLetter = /Group Stage\s*-\s*Group\s+\w+/i.test(name) || /^Group\s+[A-Z]$/i.test(name);
-  return !hasLetter && name.toLowerCase().includes("group stage");
+  return name.toLowerCase().includes("third") || name.toLowerCase().includes("3rd");
 }
 import Image from "next/image";
 
