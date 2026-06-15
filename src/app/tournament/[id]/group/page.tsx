@@ -16,6 +16,7 @@ async function getGroupMatches(tournamentId: string, userId?: string) {
     .select({
       id: matches.id,
       phaseId: matches.phaseId,
+      externalId: matches.externalId,
       startsAt: matches.startsAt,
       status: matches.status,
       homeScore: matches.homeScore,

@@ -11,9 +11,19 @@ interface OtherPrediction {
   points: number | null;
 }
 
+interface MatchEvent {
+  time: { elapsed: number; extra: number | null };
+  team: { id: number; name: string };
+  player: { id: number | null; name: string | null };
+  assist: { id: number | null; name: string | null };
+  type: string;
+  detail: string;
+}
+
 interface Match {
   id: string;
   tournamentId: string;
+  externalId: string | null;
   homeTeam: { name: string; shortName: string | null; logoUrl: string | null; countryCode: string | null } | null;
   awayTeam: { name: string; shortName: string | null; logoUrl: string | null; countryCode: string | null } | null;
   startsAt: string;
@@ -112,6 +122,9 @@ export function PredictionInput({ match }: PredictionInputProps) {
   const [showOthers, setShowOthers] = useState(false);
   const [others, setOthers] = useState<OtherPrediction[] | null>(null);
   const [loadingOthers, setLoadingOthers] = useState(false);
+  const [showEvents, setShowEvents] = useState(false);
+  const [events, setEvents] = useState<MatchEvent[] | null>(null);
+  const [loadingEvents, setLoadingEvents] = useState(false);
 
   async function toggleOthers() {
     if (showOthers) { setShowOthers(false); return; }
@@ -123,6 +136,19 @@ export function PredictionInput({ match }: PredictionInputProps) {
     } finally {
       setLoadingOthers(false);
       setShowOthers(true);
+    }
+  }
+
+  async function toggleEvents() {
+    if (showEvents) { setShowEvents(false); return; }
+    if (events !== null) { setShowEvents(true); return; }
+    setLoadingEvents(true);
+    try {
+      const res = await fetch(`/api/matches/${match.id}/events`);
+      if (res.ok) setEvents(await res.json());
+    } finally {
+      setLoadingEvents(false);
+      setShowEvents(true);
     }
   }
 
@@ -280,13 +306,55 @@ export function PredictionInput({ match }: PredictionInputProps) {
       )}
 
       {locked && (
-        <div className="mt-3">
-          <button
-            onClick={toggleOthers}
-            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          >
-            {loadingOthers ? "Laddar…" : showOthers ? "▲ Dölj tips" : `▼ Visa vad alla tippade`}
-          </button>
+        <div className="mt-3 space-y-2">
+          <div className="flex gap-4">
+            <button
+              onClick={toggleOthers}
+              className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              {loadingOthers ? "Laddar…" : showOthers ? "▲ Dölj tips" : "▼ Visa allas tips"}
+            </button>
+            {(match.status === "finished" || match.status === "live") && (
+              <button
+                onClick={toggleEvents}
+                className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                {loadingEvents ? "Laddar…" : showEvents ? "▲ Dölj händelser" : "▼ Mål & kort"}
+              </button>
+            )}
+          </div>
+
+          {showEvents && events && (
+            <div className="mt-1 border border-gray-100 dark:border-gray-800 rounded-lg overflow-hidden">
+              {events.length === 0 ? (
+                <p className="text-xs text-gray-400 px-3 py-2">Inga händelser registrerade.</p>
+              ) : (
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {events.map((e, i) => {
+                    const isGoal = e.type === "Goal";
+                    const isOwnGoal = e.detail === "Own Goal";
+                    const isPenalty = e.detail === "Penalty";
+                    const isYellow = e.detail === "Yellow Card";
+                    const isRed = e.detail === "Red Card" || e.detail === "Second Yellow card";
+                    const icon = isGoal
+                      ? isOwnGoal ? "⚽️" : isPenalty ? "⚽️ (P)" : "⚽️"
+                      : isYellow ? "🟨" : isRed ? "🟥" : "📋";
+                    const minute = e.time.extra ? `${e.time.elapsed}+${e.time.extra}'` : `${e.time.elapsed}'`;
+                    return (
+                      <div key={i} className="flex items-center gap-2 px-3 py-1.5 text-xs">
+                        <span className="text-gray-400 w-10 shrink-0 tabular-nums">{minute}</span>
+                        <span>{icon}</span>
+                        <span className="flex-1 truncate font-medium">{e.player.name ?? "–"}</span>
+                        {e.assist.name && (
+                          <span className="text-gray-400 truncate">assist: {e.assist.name}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
           {showOthers && others && (
             <div className="mt-2 divide-y divide-gray-100 dark:divide-gray-800 border border-gray-100 dark:border-gray-800 rounded-lg overflow-hidden">
               {others.length === 0 ? (

@@ -6,6 +6,7 @@ import { PredictionInput } from "./PredictionInput";
 interface Match {
   id: string;
   tournamentId: string;
+  externalId: string | null;
   homeTeam: { name: string; shortName: string | null; logoUrl: string | null; countryCode: string | null } | null;
   awayTeam: { name: string; shortName: string | null; logoUrl: string | null; countryCode: string | null } | null;
   startsAt: string;

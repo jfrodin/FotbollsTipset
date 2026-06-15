@@ -83,3 +83,16 @@ export async function fetchTopYellowCards(leagueId: string, season: number): Pro
 export async function fetchTopRedCards(leagueId: string, season: number): Promise<ApiFootballTopScorer[]> {
   return apiFetch<ApiFootballTopScorer[]>(`/players/topredcards?league=${leagueId}&season=${season}`);
 }
+
+export interface ApiFootballEvent {
+  time: { elapsed: number; extra: number | null };
+  team: { id: number; name: string };
+  player: { id: number | null; name: string | null };
+  assist: { id: number | null; name: string | null };
+  type: string;
+  detail: string;
+}
+
+export async function fetchMatchEvents(fixtureId: string): Promise<ApiFootballEvent[]> {
+  return apiFetch<ApiFootballEvent[]>(`/fixtures/events?fixture=${fixtureId}`);
+}
