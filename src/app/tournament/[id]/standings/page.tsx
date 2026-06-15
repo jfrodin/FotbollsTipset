@@ -10,20 +10,18 @@ import { toSwedish } from "@/lib/team-names";
 
 function toSwedishGroup(name: string, size?: number): string {
   if (!name) return name;
-  // Bästa treor identifieras enbart på storlek (12 lag i VM 2026) eller om "third" finns i namnet
-  if (size && size > 6) return "Bästa grupptreor";
   const lower = name.toLowerCase();
   if (lower.includes("third") || lower.includes("3rd")) return "Bästa grupptreor";
-  // "Group Stage - Group A" → "Grupp A"
+  if (size && size > 12) return "Bästa grupptreor";
+  if (/^group stage$/i.test(name.trim())) return "Bästa grupptreor";
   const stageMatch = name.match(/Group Stage\s*-\s*Group\s+(\w+)/i);
   if (stageMatch) return `Grupp ${stageMatch[1]}`;
-  // "Group A" → "Grupp A"
   return name.replace(/^Group\s+/i, "Grupp ");
 }
 
 function isThirdPlacedGroup(name: string, size: number): boolean {
-  if (size > 6) return true;
-  return name.toLowerCase().includes("third") || name.toLowerCase().includes("3rd");
+  if (size > 12) return true;
+  return name.toLowerCase().includes("third") || name.toLowerCase().includes("3rd") || /^group stage$/i.test(name.trim());
 }
 import Image from "next/image";
 
@@ -81,13 +79,7 @@ export default async function StandingsPage({ params }: Props) {
           </div>
         )}
 
-        {groups.length > 0 && (
-          <div className="mb-4 p-3 bg-gray-100 dark:bg-gray-800 rounded text-xs font-mono text-gray-500 overflow-x-auto">
-            {groups.map(g => `"${g.name}" (${g.entries.length})`).join(" | ")}
-          </div>
-        )}
-
-        {!error && groups.length === 0 && (
+{!error && groups.length === 0 && (
           <div className="text-center py-16 text-gray-400">
             <div className="text-4xl mb-3">📊</div>
             <p className="font-medium text-gray-600 dark:text-gray-300">Inga ställningar tillgängliga än.</p>
