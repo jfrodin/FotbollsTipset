@@ -112,6 +112,15 @@ export function AdminPanel({ tournaments, users, syncLogs, currentUserId }: Prop
     router.refresh();
   }
 
+  async function toggleAccepted(id: string, current: boolean) {
+    await fetch(`/api/admin/users/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hasAcceptedTerms: !current }),
+    });
+    router.refresh();
+  }
+
 
   async function deleteUser(id: string, name: string) {
     if (!confirm(`Ta bort ${name}? Detta går inte att ångra.`)) return;
@@ -315,8 +324,14 @@ export function AdminPanel({ tournaments, users, syncLogs, currentUserId }: Prop
                   <td className="px-4 py-3 text-right text-gray-500 text-sm hidden sm:table-cell">
                     {u.predictionCount}
                   </td>
-                  <td className="px-4 py-3 text-center text-lg">
-                    {u.hasAcceptedTerms ? "✅" : "⬜"}
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      onClick={() => toggleAccepted(u.id, u.hasAcceptedTerms)}
+                      className="text-lg hover:scale-110 transition-transform"
+                      title={u.hasAcceptedTerms ? "Klicka för att avmarkera" : "Klicka för att markera som betald"}
+                    >
+                      {u.hasAcceptedTerms ? "✅" : "⬜"}
+                    </button>
                   </td>
                   <td className="px-4 py-3 text-gray-400 text-xs hidden md:table-cell">
                     {new Date(u.createdAt).toLocaleDateString("sv-SE")}

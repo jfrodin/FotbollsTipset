@@ -18,6 +18,9 @@ interface MatchEvent {
   assist: { id: number | null; name: string | null };
   type: string;
   detail: string;
+  side: "home" | "away" | null;
+  countryCode: string | null;
+  score: { home: number; away: number } | null;
 }
 
 interface Match {
@@ -337,17 +340,35 @@ export function PredictionInput({ match }: PredictionInputProps) {
                     const isYellow = e.detail === "Yellow Card";
                     const isRed = e.detail === "Red Card" || e.detail === "Second Yellow card";
                     const icon = isGoal
-                      ? isOwnGoal ? "⚽️" : isPenalty ? "⚽️ (P)" : "⚽️"
-                      : isYellow ? "🟨" : isRed ? "🟥" : "📋";
+                      ? isPenalty ? "⚽P" : isOwnGoal ? "⚽SG" : "⚽"
+                      : isYellow ? "🟨" : isRed ? "🟥" : null;
+                    if (!icon) return null;
                     const minute = e.time.extra ? `${e.time.elapsed}+${e.time.extra}'` : `${e.time.elapsed}'`;
+                    const isHome = e.side === "home";
+                    const isAway = e.side === "away";
                     return (
-                      <div key={i} className="flex items-center gap-2 px-3 py-1.5 text-xs">
-                        <span className="text-gray-400 w-10 shrink-0 tabular-nums">{minute}</span>
-                        <span>{icon}</span>
-                        <span className="flex-1 truncate font-medium">{e.player.name ?? "–"}</span>
-                        {e.assist.name && (
-                          <span className="text-gray-400 truncate">assist: {e.assist.name}</span>
-                        )}
+                      <div key={i} className="grid grid-cols-[1fr_auto_1fr] items-center gap-1 px-3 py-1.5 text-xs">
+                        {/* Left: home team event */}
+                        <div className={`flex items-center gap-1 min-w-0 ${isHome ? "" : "invisible"}`}>
+                          {e.countryCode && <CountryFlag code={e.countryCode} size={14} />}
+                          <span>{icon}</span>
+                          <span className="truncate font-medium">{e.player.name ?? "–"}</span>
+                        </div>
+                        {/* Center: minute + score */}
+                        <div className="flex flex-col items-center shrink-0 w-14">
+                          <span className="text-gray-400 tabular-nums">{minute}</span>
+                          {isGoal && e.score && (
+                            <span className="font-bold text-green-600 dark:text-green-400 tabular-nums">
+                              {e.score.home}–{e.score.away}
+                            </span>
+                          )}
+                        </div>
+                        {/* Right: away team event */}
+                        <div className={`flex items-center gap-1 justify-end min-w-0 ${isAway ? "" : "invisible"}`}>
+                          <span className="truncate font-medium">{e.player.name ?? "–"}</span>
+                          <span>{icon}</span>
+                          {e.countryCode && <CountryFlag code={e.countryCode} size={14} />}
+                        </div>
                       </div>
                     );
                   })}
@@ -356,21 +377,38 @@ export function PredictionInput({ match }: PredictionInputProps) {
             </div>
           )}
           {showOthers && others && (
-            <div className="mt-2 divide-y divide-gray-100 dark:divide-gray-800 border border-gray-100 dark:border-gray-800 rounded-lg overflow-hidden">
+            <div className="mt-2 border border-gray-100 dark:border-gray-800 rounded-lg overflow-hidden">
               {others.length === 0 ? (
                 <p className="text-xs text-gray-400 px-3 py-2">Ingen har tippat denna match.</p>
               ) : (
-                others.map((o) => (
-                  <div key={o.userId} className="flex items-center justify-between px-3 py-1.5 text-xs">
-                    <span className="text-gray-600 dark:text-gray-400">{o.displayName}</span>
-                    <span className="font-medium tabular-nums">
-                      {o.predictedHomeScore}–{o.predictedAwayScore}
-                      {o.points !== null && (
-                        <span className="ml-1.5 text-green-600 dark:text-green-400 font-semibold">{o.points}p</span>
-                      )}
-                    </span>
+                <>
+                  {/* Sammanfattning */}
+                  {match.status === "finished" && (() => {
+                    const total = others.length;
+                    const exact = others.filter(o => o.points !== null && o.points >= 5).length;
+                    const correct = others.filter(o => o.points !== null && o.points > 0).length;
+                    return (
+                      <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-800 text-xs text-gray-500 flex gap-3 flex-wrap">
+                        <span>{total} tippade</span>
+                        <span>⚽ Exakt: <strong className="text-gray-700 dark:text-gray-300">{Math.round(exact / total * 100)}%</strong></span>
+                        <span>✓ Rätt utfall: <strong className="text-gray-700 dark:text-gray-300">{Math.round(correct / total * 100)}%</strong></span>
+                      </div>
+                    );
+                  })()}
+                  <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                    {others.map((o) => (
+                      <div key={o.userId} className="flex items-center justify-between px-3 py-1.5 text-xs">
+                        <span className="text-gray-600 dark:text-gray-400">{o.displayName}</span>
+                        <span className="font-medium tabular-nums">
+                          {o.predictedHomeScore}–{o.predictedAwayScore}
+                          {o.points !== null && (
+                            <span className="ml-1.5 text-green-600 dark:text-green-400 font-semibold">{o.points}p</span>
+                          )}
+                        </span>
+                      </div>
+                    ))}
                   </div>
-                ))
+                </>
               )}
             </div>
           )}

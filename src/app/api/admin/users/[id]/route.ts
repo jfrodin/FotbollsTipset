@@ -8,6 +8,7 @@ import { eq } from "drizzle-orm";
 const updateSchema = z.object({
   displayName: z.string().min(1).optional(),
   role: z.enum(["player", "admin"]).optional(),
+  hasAcceptedTerms: z.boolean().optional(),
 });
 
 export async function PATCH(
