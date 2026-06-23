@@ -90,24 +90,15 @@ export async function GET(
         const eventTeamExtId = String(e.team.id);
         const isHome = eventTeamExtId === homeExternalId;
         const isAway = eventTeamExtId === awayExternalId;
-        const isOwnGoal = e.type === "Goal" && e.detail === "Own Goal";
-        // Självmål visas på motståndarsidan (de som fick målet)
-        const side: "home" | "away" | null = isOwnGoal
-          ? (isHome ? "away" : isAway ? "home" : null)
-          : (isHome ? "home" : isAway ? "away" : null);
-        const countryCode = isOwnGoal
-          ? (isHome ? awayCountryCode : homeCountryCode)
-          : (isHome ? homeCountryCode : awayCountryCode);
+        // OBS: vid självmål är e.team laget som GYNNAS (inte spelarens eget lag) –
+        // ingen flippning behövs, side/countryCode/poäng följer e.team rakt av
+        const side: "home" | "away" | null = isHome ? "home" : isAway ? "away" : null;
+        const countryCode = isHome ? homeCountryCode : isAway ? awayCountryCode : null;
 
         let score: { home: number; away: number } | null = null;
         if (e.type === "Goal") {
-          if (isOwnGoal) {
-            if (isHome) awayScore++;
-            else homeScore++;
-          } else {
-            if (isHome) homeScore++;
-            else awayScore++;
-          }
+          if (isHome) homeScore++;
+          else awayScore++;
           score = { home: homeScore, away: awayScore };
         }
 

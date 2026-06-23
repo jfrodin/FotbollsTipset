@@ -97,25 +97,41 @@ export default async function StandingsPage({ params }: Props) {
   const standings = standingsData.status === "fulfilled" ? standingsData.value : [];
   const rawStandings = standings[0]?.league?.standings ?? [];
 
-  const groups = rawStandings
+  // API:ts separata "Group Stage"-lista för bästa treor innehåller ibland gammal/felaktig
+  // data (t.ex. fel antal spelade matcher). Vi ignorerar den och bygger treorna själva
+  // utifrån de riktiga gruppställningarna (rank === 3) längre ner istället.
+  const realGroups = rawStandings
     .filter((g) => g.length > 0)
-    .map((g) => {
-      const unique = dedup(g);
-      const name = g[0]?.group ?? "";
-      const swedishName = toSwedishGroup(name, unique.length);
-      return {
-        name,
-        swedishName,
-        isThird: isThirdPlacedGroup(name, unique.length),
-        entries: unique,
-      };
-    })
-    .sort((a, b) => {
-      // Bästa grupptreor alltid sist
-      if (a.isThird && !b.isThird) return 1;
-      if (!a.isThird && b.isThird) return -1;
-      return a.name.localeCompare(b.name);
-    });
+    .map((g) => ({ name: g[0]?.group ?? "", entries: dedup(g) }))
+    .filter((g) => !isThirdPlacedGroup(g.name, g.entries.length));
+
+  const thirdPlacedEntries = realGroups
+    .map((g) => g.entries.find((e) => e.rank === 3))
+    .filter((e): e is NonNullable<typeof e> => !!e);
+
+  const groups = [
+    ...realGroups.map((g) => ({
+      name: g.name,
+      swedishName: toSwedishGroup(g.name, g.entries.length),
+      isThird: false,
+      entries: g.entries,
+    })),
+    {
+      name: "Bästa grupptreor",
+      swedishName: "Bästa grupptreor",
+      isThird: true,
+      entries: [...thirdPlacedEntries].sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.goalsDiff !== a.goalsDiff) return b.goalsDiff - a.goalsDiff;
+        return b.all.goals.for - a.all.goals.for;
+      }),
+    },
+  ].sort((a, b) => {
+    // Bästa grupptreor alltid sist
+    if (a.isThird && !b.isThird) return 1;
+    if (!a.isThird && b.isThird) return -1;
+    return a.name.localeCompare(b.name);
+  });
 
   // Build bracket from current standings
   const positionMap = new Map<string, { id: number; name: string; logo: string }>();

@@ -340,7 +340,7 @@ export function PredictionInput({ match }: PredictionInputProps) {
                     const isYellow = e.detail === "Yellow Card";
                     const isRed = e.detail === "Red Card" || e.detail === "Second Yellow card";
                     const icon = isGoal
-                      ? isPenalty ? "⚽P" : isOwnGoal ? "⚽SG" : "⚽"
+                      ? isPenalty ? "⚽ (straff)" : isOwnGoal ? "⚽ (självmål)" : "⚽"
                       : isYellow ? "🟨" : isRed ? "🟥" : null;
                     if (!icon) return null;
                     const minute = e.time.extra ? `${e.time.elapsed}+${e.time.extra}'` : `${e.time.elapsed}'`;
