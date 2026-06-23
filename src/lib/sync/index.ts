@@ -232,7 +232,7 @@ export async function syncTournament(tournamentId: string): Promise<SyncResult> 
   return result;
 }
 
-async function scorePredictions(
+export async function scorePredictions(
   matchId: string,
   homeScore: number,
   awayScore: number,

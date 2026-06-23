@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth/session";
 import { db } from "@/db";
-import { matches, teams } from "@/db/schema";
+import { matches, teams, tournaments } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { fetchMatchEvents, fetchFixture } from "@/lib/football-api/api-football";
+import { scorePredictions } from "@/lib/sync";
 
 export async function GET(
   _req: NextRequest,
@@ -20,6 +21,7 @@ export async function GET(
       externalId: matches.externalId,
       homeTeamId: matches.homeTeamId,
       awayTeamId: matches.awayTeamId,
+      tournamentId: matches.tournamentId,
     })
     .from(matches)
     .where(eq(matches.id, matchId))
@@ -54,13 +56,26 @@ export async function GET(
       const status = fixture.fixture.status.short;
       const isLive = ["1H","HT","2H","ET","BT","P","INT","LIVE"].includes(status);
       const isFinished = ["FT","AET","PEN"].includes(status);
+      const newHomeScore = fixture.goals.home;
+      const newAwayScore = fixture.goals.away;
+
       if (isLive || isFinished) {
+        const wasFinished = match.status === "finished";
         await db.update(matches).set({
-          homeScore: fixture.goals.home ?? undefined,
-          awayScore: fixture.goals.away ?? undefined,
+          homeScore: newHomeScore ?? undefined,
+          awayScore: newAwayScore ?? undefined,
           status: isFinished ? "finished" : "live",
           updatedAt: new Date(),
         }).where(eq(matches.id, matchId));
+
+        // Poängsätt tips om matchen precis blivit avslutad (annars hoppar synken över det
+        // eftersom inget "ändrats" när den kör nästa gång)
+        if (isFinished && !wasFinished && newHomeScore !== null && newAwayScore !== null) {
+          const [tournament] = await db.select().from(tournaments).where(eq(tournaments.id, match.tournamentId)).limit(1);
+          if (tournament) {
+            await scorePredictions(matchId, newHomeScore, newAwayScore, tournament.pointsForCorrectOutcome, tournament.pointsForExactScore);
+          }
+        }
       }
     }
 
