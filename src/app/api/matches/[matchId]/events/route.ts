@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { db } from "@/db";
 import { matches, teams } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { fetchMatchEvents } from "@/lib/football-api/api-football";
+import { fetchMatchEvents, fetchFixture } from "@/lib/football-api/api-football";
 
 export async function GET(
   _req: NextRequest,
@@ -48,6 +48,22 @@ export async function GET(
   const awayCountryCode = awayTeamRows[0]?.countryCode;
 
   try {
+    // Hämta fixture för att få aktuellt resultat och status
+    const fixture = await fetchFixture(match.externalId).catch(() => null);
+    if (fixture) {
+      const status = fixture.fixture.status.short;
+      const isLive = ["1H","HT","2H","ET","BT","P","INT","LIVE"].includes(status);
+      const isFinished = ["FT","AET","PEN"].includes(status);
+      if (isLive || isFinished) {
+        await db.update(matches).set({
+          homeScore: fixture.goals.home ?? undefined,
+          awayScore: fixture.goals.away ?? undefined,
+          status: isFinished ? "finished" : "live",
+          updatedAt: new Date(),
+        }).where(eq(matches.id, matchId));
+      }
+    }
+
     const events = await fetchMatchEvents(match.externalId);
 
     let homeScore = 0;
@@ -59,12 +75,17 @@ export async function GET(
         const eventTeamExtId = String(e.team.id);
         const isHome = eventTeamExtId === homeExternalId;
         const isAway = eventTeamExtId === awayExternalId;
-        const side: "home" | "away" | null = isHome ? "home" : isAway ? "away" : null;
-        const countryCode = isHome ? homeCountryCode : isAway ? awayCountryCode : null;
+        const isOwnGoal = e.type === "Goal" && e.detail === "Own Goal";
+        // Självmål visas på motståndarsidan (de som fick målet)
+        const side: "home" | "away" | null = isOwnGoal
+          ? (isHome ? "away" : isAway ? "home" : null)
+          : (isHome ? "home" : isAway ? "away" : null);
+        const countryCode = isOwnGoal
+          ? (isHome ? awayCountryCode : homeCountryCode)
+          : (isHome ? homeCountryCode : awayCountryCode);
 
         let score: { home: number; away: number } | null = null;
         if (e.type === "Goal") {
-          const isOwnGoal = e.detail === "Own Goal";
           if (isOwnGoal) {
             if (isHome) awayScore++;
             else homeScore++;

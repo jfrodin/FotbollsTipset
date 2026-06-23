@@ -84,6 +84,10 @@ export async function fetchTopRedCards(leagueId: string, season: number): Promis
   return apiFetch<ApiFootballTopScorer[]>(`/players/topredcards?league=${leagueId}&season=${season}`);
 }
 
+export async function fetchFixturesByRound(leagueId: string, season: number, round: string): Promise<ApiFootballFixture[]> {
+  return apiFetch<ApiFootballFixture[]>(`/fixtures?league=${leagueId}&season=${season}&round=${encodeURIComponent(round)}`);
+}
+
 export interface ApiFootballEvent {
   time: { elapsed: number; extra: number | null };
   team: { id: number; name: string };

@@ -19,14 +19,31 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
-// VM 2026 Round of 32 bracket (based on FIFA draw format)
-// Format: [homeGroupPos, awayGroupPos] e.g. ["A1", "B2"]
-const VM2026_BRACKET: [string, string][] = [
-  ["A1", "B2"], ["C1", "D2"], ["E1", "F2"], ["G1", "H2"],
-  ["I1", "J2"], ["K1", "L2"], ["A2", "B1"], ["C2", "D1"],
-  ["E2", "F1"], ["G2", "H1"], ["I2", "J1"], ["K2", "L1"],
-  ["3rd-1", "3rd-2"], ["3rd-3", "3rd-4"],
-  ["3rd-5", "3rd-6"], ["3rd-7", "3rd-8"],
+// VM 2026 Round of 32 – korrekt bracket baserad på FIFA-lottningen december 2024
+// Vänster halva (matcher 73-80), höger halva (matcher 81-88)
+// Källor: Wikipedia / FIFA / Sky Sports
+// "3rd" = bästa treor (position avgörs av vilka grupper som kvalificerar en 3:a)
+// VM 2026 Round of 32 – korrekt bracket baserad på FIFA-lottningen december 2024
+// Källor: Wikipedia / FIFA / Sky Sports
+const VM2026_BRACKET: [string, string, string?, string?][] = [
+  // Vänster halva (top → botten)
+  ["A2", "B2"],
+  ["F1", "C2"],
+  ["E1", "3rd-ABCDF"],   // M74 – E1 vs bästa 3:a från grupp A/B/C/D/F
+  ["I1", "3rd-CDFGH"],   // M77 – I1 vs bästa 3:a från grupp C/D/F/G/H
+  ["C1", "F2"],
+  ["E2", "I2"],
+  ["A1", "3rd-CEFHI"],   // M79 – A1 (Mexiko) vs bästa 3:a från grupp C/E/F/H/I
+  ["L1", "3rd-EHIJK"],   // M80 – L1 vs bästa 3:a från grupp E/H/I/J/K
+  // Höger halva (top → botten)
+  ["D1", "3rd-BEFIJ"],   // M81 – D1 (USA) vs bästa 3:a från grupp B/E/F/I/J
+  ["G1", "3rd-AEHIJ"],   // M82 – G1 vs bästa 3:a från grupp A/E/H/I/J
+  ["K2", "L2"],
+  ["H1", "J2"],
+  ["B1", "3rd-EFGIJ"],   // M85 – B1 (Kanada) vs bästa 3:a från grupp E/F/G/I/J
+  ["K1", "3rd-DEIJL"],   // M87 – K1 vs bästa 3:a från grupp D/E/I/J/L
+  ["J1", "H2"],
+  ["D2", "G2"],
 ];
 
 function toSwedishGroup(name: string, size?: number): string {
@@ -92,6 +109,12 @@ export default async function StandingsPage({ params }: Props) {
         isThird: isThirdPlacedGroup(name, unique.length),
         entries: unique,
       };
+    })
+    .sort((a, b) => {
+      // Bästa grupptreor alltid sist
+      if (a.isThird && !b.isThird) return 1;
+      if (!a.isThird && b.isThird) return -1;
+      return a.name.localeCompare(b.name);
     });
 
   // Build bracket from current standings
@@ -128,9 +151,15 @@ export default async function StandingsPage({ params }: Props) {
     positionMap.set(`3rd-${i + 1}`, t.team);
   });
 
+  function slotLabel(key: string): string {
+    if (!key.startsWith("3rd-")) return key;
+    const groups = key.replace("3rd-", "").split("").join("/");
+    return `Bästa 3:a (${groups})`;
+  }
+
   const bracket = VM2026_BRACKET.map(([h, a]) => ({
-    home: { label: h, team: positionMap.get(h) ?? null },
-    away: { label: a, team: positionMap.get(a) ?? null },
+    home: { label: slotLabel(h), team: positionMap.get(h) ?? null },
+    away: { label: slotLabel(a), team: positionMap.get(a) ?? null },
   }));
 
   return (
