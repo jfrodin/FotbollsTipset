@@ -118,48 +118,67 @@ export default async function StandingsPage({ params }: Props) {
     });
 
   // Build bracket from current standings
-  // Create a map: "A1" → team, "A2" → team, etc.
-  const positionMap = new Map<string, { name: string; logo: string }>();
-  const thirdPlaced: { team: { name: string; logo: string }; points: number; goalsDiff: number; goals: number }[] = [];
+  const positionMap = new Map<string, { id: number; name: string; logo: string }>();
+  // teamId → group letter (t.ex. "A", "B") för att hitta treornas ursprungsgrupp
+  const teamGroupMap = new Map<number, string>();
 
   for (const group of groups) {
-    if (group.isThird) {
-      for (const entry of group.entries) {
-        thirdPlaced.push({
-          team: entry.team,
-          points: entry.points,
-          goalsDiff: entry.goalsDiff,
-          goals: entry.all.goals.for,
-        });
-      }
-      continue;
-    }
+    if (group.isThird) continue;
     const letter = group.name.replace(/^Group\s+/i, "").replace(/^Group Stage\s*-\s*Group\s+/i, "");
     for (const entry of group.entries) {
       positionMap.set(`${letter}${entry.rank}`, entry.team);
+      teamGroupMap.set(entry.team.id, letter);
     }
   }
 
-  // Sort third-placed teams
+  // Bygg lista med treor inkl. deras ursprungsgrupp
+  const thirdPlaced: { team: { id: number; name: string; logo: string }; points: number; goalsDiff: number; goals: number; groupLetter: string }[] = [];
+  for (const group of groups) {
+    if (!group.isThird) continue;
+    for (const entry of group.entries) {
+      const groupLetter = teamGroupMap.get(entry.team.id) ?? "";
+      thirdPlaced.push({
+        team: entry.team,
+        points: entry.points,
+        goalsDiff: entry.goalsDiff,
+        goals: entry.all.goals.for,
+        groupLetter,
+      });
+    }
+  }
+
   thirdPlaced.sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
     if (b.goalsDiff !== a.goalsDiff) return b.goalsDiff - a.goalsDiff;
     return b.goals - a.goals;
   });
 
-  thirdPlaced.forEach((t, i) => {
-    positionMap.set(`3rd-${i + 1}`, t.team);
-  });
+  // Populera bracket-slots för treor: hitta bästa trea från rätt grupper
+  // Nyckel format: "3rd-ABCDF" → ta bästa trea vars grupLetter finns i "ABCDF"
+  const usedThirdTeamIds = new Set<number>();
+  function bestThirdFromGroups(groupLetters: string): { name: string; logo: string } | null {
+    for (const t of thirdPlaced) {
+      if (!usedThirdTeamIds.has(t.team.id) && groupLetters.includes(t.groupLetter)) {
+        usedThirdTeamIds.add(t.team.id);
+        return t.team;
+      }
+    }
+    return null;
+  }
 
-  function slotLabel(key: string): string {
-    if (!key.startsWith("3rd-")) return key;
-    const groups = key.replace("3rd-", "").split("").join("/");
-    return `Bästa 3:a (${groups})`;
+  function resolveSlot(key: string): { label: string; team: { name: string; logo: string } | null } {
+    if (!key.startsWith("3rd-")) {
+      return { label: key, team: positionMap.get(key) ?? null };
+    }
+    const letters = key.replace("3rd-", "");
+    const label = `Bästa 3:a (${letters.split("").join("/")})`;
+    const team = bestThirdFromGroups(letters);
+    return { label, team };
   }
 
   const bracket = VM2026_BRACKET.map(([h, a]) => ({
-    home: { label: slotLabel(h), team: positionMap.get(h) ?? null },
-    away: { label: slotLabel(a), team: positionMap.get(a) ?? null },
+    home: resolveSlot(h),
+    away: resolveSlot(a),
   }));
 
   return (
