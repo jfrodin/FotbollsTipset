@@ -120,11 +120,13 @@ export default async function StandingsPage({ params }: Props) {
       name: "Bästa grupptreor",
       swedishName: "Bästa grupptreor",
       isThird: true,
-      entries: [...thirdPlacedEntries].sort((a, b) => {
-        if (b.points !== a.points) return b.points - a.points;
-        if (b.goalsDiff !== a.goalsDiff) return b.goalsDiff - a.goalsDiff;
-        return b.all.goals.for - a.all.goals.for;
-      }),
+      entries: [...thirdPlacedEntries]
+        .sort((a, b) => {
+          if (b.points !== a.points) return b.points - a.points;
+          if (b.goalsDiff !== a.goalsDiff) return b.goalsDiff - a.goalsDiff;
+          return b.all.goals.for - a.all.goals.for;
+        })
+        .map((e, idx) => ({ ...e, rank: idx + 1 })),
     },
   ].sort((a, b) => {
     // Bästa grupptreor alltid sist
