@@ -137,61 +137,47 @@ export default async function StandingsPage({ params }: Props) {
 
   // Build bracket from current standings
   const positionMap = new Map<string, { id: number; name: string; logo: string }>();
-  // teamId → group letter (t.ex. "A", "B") för att hitta treornas ursprungsgrupp
-  const teamGroupMap = new Map<number, string>();
+  const MATCHES_PER_TEAM = 3;
+
+  // Ett lag visas i bracket-positionen bara om gruppen är helt klar, eller om
+  // inget lag under dem i tabellen matematiskt kan ta igen deras poäng (klinchat)
+  function isPositionClinched(entries: ApiFootballStandingEntry[], idx: number): boolean {
+    const team = entries[idx];
+    if (!team) return false;
+    const allFinished = entries.every((e) => e.all.played >= MATCHES_PER_TEAM);
+    if (allFinished) return true;
+    // entries är redan sorterad efter nuvarande placering (poäng/målskillnad/inbördes möten).
+    // Om ett hotande lag i bästa fall bara kan nå SAMMA poäng (inte fler) och vårt lag redan
+    // ligger före dem just nu, har de redan förlorat den tiebreakern (t.ex. inbördes möte)
+    // – då räknar vi platsen som klinchad.
+    return entries.slice(idx + 1).every((e) => {
+      const maxPoints = e.points + (MATCHES_PER_TEAM - e.all.played) * 3;
+      return maxPoints <= team.points;
+    });
+  }
 
   for (const group of groups) {
     if (group.isThird) continue;
     const letter = group.name.replace(/^Group\s+/i, "").replace(/^Group Stage\s*-\s*Group\s+/i, "");
-    for (const entry of group.entries) {
-      positionMap.set(`${letter}${entry.rank}`, entry.team);
-      teamGroupMap.set(entry.team.id, letter);
-    }
-  }
-
-  // Bygg lista med treor inkl. deras ursprungsgrupp
-  const thirdPlaced: { team: { id: number; name: string; logo: string }; points: number; goalsDiff: number; goals: number; groupLetter: string }[] = [];
-  for (const group of groups) {
-    if (!group.isThird) continue;
-    for (const entry of group.entries) {
-      const groupLetter = teamGroupMap.get(entry.team.id) ?? "";
-      thirdPlaced.push({
-        team: entry.team,
-        points: entry.points,
-        goalsDiff: entry.goalsDiff,
-        goals: entry.all.goals.for,
-        groupLetter,
-      });
-    }
-  }
-
-  thirdPlaced.sort((a, b) => {
-    if (b.points !== a.points) return b.points - a.points;
-    if (b.goalsDiff !== a.goalsDiff) return b.goalsDiff - a.goalsDiff;
-    return b.goals - a.goals;
-  });
-
-  // Populera bracket-slots för treor: hitta bästa trea från rätt grupper
-  // Nyckel format: "3rd-ABCDF" → ta bästa trea vars grupLetter finns i "ABCDF"
-  const usedThirdTeamIds = new Set<number>();
-  function bestThirdFromGroups(groupLetters: string): { name: string; logo: string } | null {
-    for (const t of thirdPlaced) {
-      if (!usedThirdTeamIds.has(t.team.id) && groupLetters.includes(t.groupLetter)) {
-        usedThirdTeamIds.add(t.team.id);
-        return t.team;
+    group.entries.forEach((entry, idx) => {
+      if (entry.rank > 2) return;
+      if (isPositionClinched(group.entries, idx)) {
+        positionMap.set(`${letter}${entry.rank}`, entry.team);
       }
-    }
-    return null;
+    });
   }
 
+  // OBS: vilket 3:e-placerat lag som hamnar i vilken slot avgörs av FIFA:s officiella
+  // kombinationstabell (beroende på vilka 8 av 12 grupper som kvalificerar en trea).
+  // Vi har inte den tabellen och gissar inte – visar bara platsen tills riktiga
+  // slutspelsfixturer dyker upp i API:t.
   function resolveSlot(key: string): { label: string; team: { name: string; logo: string } | null } {
     if (!key.startsWith("3rd-")) {
       return { label: key, team: positionMap.get(key) ?? null };
     }
     const letters = key.replace("3rd-", "");
     const label = `Bästa 3:a (${letters.split("").join("/")})`;
-    const team = bestThirdFromGroups(letters);
-    return { label, team };
+    return { label, team: null };
   }
 
   const bracket = VM2026_BRACKET.map(([h, a]) => ({
