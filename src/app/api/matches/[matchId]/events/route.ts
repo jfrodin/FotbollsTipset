@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { matches, teams, tournaments } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { fetchMatchEvents, fetchFixture } from "@/lib/football-api/api-football";
+import { regulationScore } from "@/lib/football-api/types";
 import { scorePredictions } from "@/lib/sync";
 
 export async function GET(
@@ -56,8 +57,8 @@ export async function GET(
       const status = fixture.fixture.status.short;
       const isLive = ["1H","HT","2H","ET","BT","P","INT","LIVE"].includes(status);
       const isFinished = ["FT","AET","PEN"].includes(status);
-      const newHomeScore = fixture.goals.home;
-      const newAwayScore = fixture.goals.away;
+      // Resultat efter 90 minuter (ordinarie tid) – inte förlängning/straffar
+      const { home: newHomeScore, away: newAwayScore } = regulationScore(fixture);
 
       if (isLive || isFinished) {
         const wasFinished = match.status === "finished";

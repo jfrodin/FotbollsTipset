@@ -62,7 +62,23 @@ export default async function KnockoutPage({ params }: Props) {
   if (!session) redirect("/login");
 
   const { id: tournamentId } = await params;
-  const matches = await getKnockoutMatches(tournamentId, session.id);
+  const allMatches = await getKnockoutMatches(tournamentId, session.id);
+
+  const firstStart = allMatches.length > 0
+    ? allMatches.reduce((earliest, m) => new Date(m.startsAt) < new Date(earliest) ? m.startsAt : earliest, allMatches[0].startsAt)
+    : null;
+  // Lås upp vid midnatt samma dag som första matchen – inte vid matchens starttid,
+  // annars hinner ingen tippa innan matchen låser sig själv
+  let unlocksAt: Date | null = null;
+  if (firstStart) {
+    const d = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm", year: "numeric", month: "2-digit", day: "2-digit" })
+      .formatToParts(new Date(firstStart));
+    const y = d.find((p) => p.type === "year")!.value;
+    const m = d.find((p) => p.type === "month")!.value;
+    const day = d.find((p) => p.type === "day")!.value;
+    unlocksAt = new Date(`${y}-${m}-${day}T00:00:00+02:00`);
+  }
+  const isOpen = unlocksAt !== null && new Date() >= unlocksAt;
 
   return (
     <>
@@ -76,14 +92,18 @@ export default async function KnockoutPage({ params }: Props) {
           <h1 className="text-xl font-bold">Slutspel</h1>
         </div>
 
-        {matches.length === 0 ? (
+        {!isOpen ? (
           <div className="text-center py-16 text-gray-400">
             <div className="text-4xl mb-3">🔒</div>
             <p className="font-medium text-gray-600 dark:text-gray-300">Slutspelet är inte tillgängligt än.</p>
-            <p className="text-sm mt-1">Låses upp när gruppspelet är klart och slutspelsträdet är satt.</p>
+            <p className="text-sm mt-1">
+              {unlocksAt
+                ? `Låses upp ${unlocksAt.toLocaleString("sv-SE", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Stockholm" })}.`
+                : "Låses upp när gruppspelet är klart och slutspelsträdet är satt."}
+            </p>
           </div>
         ) : (
-          <MatchList matches={matches as unknown as Parameters<typeof MatchList>[0]["matches"]} />
+          <MatchList matches={allMatches as unknown as Parameters<typeof MatchList>[0]["matches"]} />
         )}
       </main>
     </>

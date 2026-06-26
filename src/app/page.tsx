@@ -43,6 +43,7 @@ export default async function HomePage() {
   const [{ acceptedCount }] = await db.select({ acceptedCount: count().mapWith(Number) }).from(users).where(eq(users.hasAcceptedTerms, true));
   const prizePool = acceptedCount * 50;
   let hasKnockout = false;
+  let knockoutUnlocksAt: Date | null = null;
 
 
   if (tournament) {
@@ -112,7 +113,26 @@ export default async function HomePage() {
       .from(phases)
       .where(and(eq(phases.tournamentId, tournament.id), eq(phases.type, "knockout")))
       .limit(1);
-    hasKnockout = !!knockoutPhase;
+
+    if (knockoutPhase) {
+      const [firstKnockoutMatch] = await db
+        .select({ startsAt: matches.startsAt })
+        .from(matches)
+        .where(eq(matches.phaseId, knockoutPhase.id))
+        .orderBy(asc(matches.startsAt))
+        .limit(1);
+      if (firstKnockoutMatch) {
+        // Lås upp vid midnatt samma dag som första slutspelsmatchen – inte vid
+        // matchens starttid, annars hinner ingen tippa innan matchen låser sig själv
+        const d = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm", year: "numeric", month: "2-digit", day: "2-digit" })
+          .formatToParts(new Date(firstKnockoutMatch.startsAt));
+        const y = d.find((p) => p.type === "year")!.value;
+        const m = d.find((p) => p.type === "month")!.value;
+        const day = d.find((p) => p.type === "day")!.value;
+        knockoutUnlocksAt = new Date(`${y}-${m}-${day}T00:00:00+02:00`);
+        hasKnockout = new Date() >= knockoutUnlocksAt;
+      }
+    }
   }
 
   return (
@@ -193,7 +213,10 @@ export default async function HomePage() {
                   <div className="text-sm text-gray-500 mt-0.5">Tippa slutspelet</div>
                 </Link>
               ) : (
-                <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-xl p-5 opacity-50 cursor-not-allowed">
+                <div
+                  className="bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 rounded-xl p-5 opacity-50 cursor-not-allowed"
+                  title={knockoutUnlocksAt ? `Låses upp ${knockoutUnlocksAt.toLocaleString("sv-SE", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Stockholm" })}` : undefined}
+                >
                   <div className="text-3xl mb-2">🔒</div>
                   <div className="font-semibold text-gray-400">Slutspel</div>
                   <div className="text-sm text-gray-400 mt-0.5">Låses upp efter gruppspelet</div>

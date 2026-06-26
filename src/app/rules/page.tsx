@@ -63,6 +63,10 @@ export default async function RulesPage() {
                 <span className="text-base mt-0.5">📊</span>
                 <p>Poäng räknas ut automatiskt när matchresultatet är klart.</p>
               </div>
+              <div className="flex items-start gap-3">
+                <span className="text-base mt-0.5">⏱️</span>
+                <p>I slutspelet räknas alltid <strong className="text-gray-800 dark:text-gray-200">resultatet efter 90 minuter</strong> (ordinarie tid) – inte förlängning eller straffar.</p>
+              </div>
             </div>
           </div>
 

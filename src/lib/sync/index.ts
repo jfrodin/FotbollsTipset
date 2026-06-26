@@ -10,7 +10,7 @@ import {
 } from "@/db/schema";
 import { eq, and, inArray } from "drizzle-orm";
 import { fetchFixtures, fetchTeams } from "@/lib/football-api/api-football";
-import { mapFixtureStatus, roundToPhaseType } from "@/lib/football-api/types";
+import { mapFixtureStatus, roundToPhaseType, regulationScore } from "@/lib/football-api/types";
 import { calculatePoints } from "@/lib/scoring";
 import { TEAM_NAME_TO_SV } from "@/lib/team-names";
 
@@ -151,8 +151,8 @@ export async function syncTournament(tournamentId: string): Promise<SyncResult> 
         .limit(1);
 
       const status = mapFixtureStatus(fixture.fixture.status.short);
-      const homeScore = fixture.goals.home;
-      const awayScore = fixture.goals.away;
+      // Resultat efter 90 minuter (ordinarie tid) – inte förlängning/straffar
+      const { home: homeScore, away: awayScore } = regulationScore(fixture);
       const svRoundName = roundName
         .replace("Group Stage - 1", "Omgång 1")
         .replace("Group Stage - 2", "Omgång 2")

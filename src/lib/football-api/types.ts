@@ -23,6 +23,19 @@ export interface ApiFootballFixture {
     home: number | null;
     away: number | null;
   };
+  score: {
+    fulltime: { home: number | null; away: number | null };
+    extratime: { home: number | null; away: number | null };
+    penalty: { home: number | null; away: number | null };
+  };
+}
+
+// Resultatet efter 90 minuter (ordinarie tid) – det är detta som ska räknas för tipspoäng,
+// inte resultat efter förlängning/straffar
+export function regulationScore(fixture: ApiFootballFixture): { home: number | null; away: number | null } {
+  return fixture.score.fulltime.home !== null
+    ? fixture.score.fulltime
+    : fixture.goals;
 }
 
 export interface ApiFootballTeam {
