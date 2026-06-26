@@ -122,14 +122,14 @@ export default async function HomePage() {
         .orderBy(asc(matches.startsAt))
         .limit(1);
       if (firstKnockoutMatch) {
-        // Lås upp vid midnatt samma dag som första slutspelsmatchen – inte vid
+        // Lås upp 08:00 samma dag som första slutspelsmatchen (efter sista gruppmatchen) – inte vid
         // matchens starttid, annars hinner ingen tippa innan matchen låser sig själv
         const d = new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Stockholm", year: "numeric", month: "2-digit", day: "2-digit" })
           .formatToParts(new Date(firstKnockoutMatch.startsAt));
         const y = d.find((p) => p.type === "year")!.value;
         const m = d.find((p) => p.type === "month")!.value;
         const day = d.find((p) => p.type === "day")!.value;
-        knockoutUnlocksAt = new Date(`${y}-${m}-${day}T00:00:00+02:00`);
+        knockoutUnlocksAt = new Date(`${y}-${m}-${day}T08:00:00+02:00`);
         hasKnockout = new Date() >= knockoutUnlocksAt;
       }
     }

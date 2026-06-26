@@ -67,7 +67,7 @@ export default async function KnockoutPage({ params }: Props) {
   const firstStart = allMatches.length > 0
     ? allMatches.reduce((earliest, m) => new Date(m.startsAt) < new Date(earliest) ? m.startsAt : earliest, allMatches[0].startsAt)
     : null;
-  // Lås upp vid midnatt samma dag som första matchen – inte vid matchens starttid,
+  // Lås upp 08:00 samma dag som första matchen (efter sista gruppmatchen) – inte vid matchens starttid,
   // annars hinner ingen tippa innan matchen låser sig själv
   let unlocksAt: Date | null = null;
   if (firstStart) {
@@ -76,7 +76,7 @@ export default async function KnockoutPage({ params }: Props) {
     const y = d.find((p) => p.type === "year")!.value;
     const m = d.find((p) => p.type === "month")!.value;
     const day = d.find((p) => p.type === "day")!.value;
-    unlocksAt = new Date(`${y}-${m}-${day}T00:00:00+02:00`);
+    unlocksAt = new Date(`${y}-${m}-${day}T08:00:00+02:00`);
   }
   const isOpen = unlocksAt !== null && new Date() >= unlocksAt;
 
