@@ -37,9 +37,11 @@ export default async function HomePage() {
   type UpcomingMatch = typeof matches.$inferSelect & {
     homeTeam: { name: string; countryCode: string | null } | null;
     awayTeam: { name: string; countryCode: string | null } | null;
+    phaseType: string | null;
   };
   let upcomingMatches: UpcomingMatch[] = [];
   let pendingCount = 0;
+  let pendingLink = "group";
   const [{ acceptedCount }] = await db.select({ acceptedCount: count().mapWith(Number) }).from(users).where(eq(users.hasAcceptedTerms, true));
   const prizePool = acceptedCount * 50;
   let hasKnockout = false;
@@ -79,8 +81,9 @@ export default async function HomePage() {
 
     const now = new Date();
     const rows = await db
-      .select()
+      .select({ match: matches, phaseType: phases.type })
       .from(matches)
+      .leftJoin(phases, eq(matches.phaseId, phases.id))
       .where(and(eq(matches.tournamentId, tournament.id), gte(matches.startsAt, now)))
       .orderBy(asc(matches.startsAt))
       .limit(5);
@@ -88,8 +91,9 @@ export default async function HomePage() {
     const allTeams = await db.select().from(teams);
     const teamMap = new Map(allTeams.map((t) => [t.id, t]));
 
-    upcomingMatches = rows.map((m) => ({
+    upcomingMatches = rows.map(({ match: m, phaseType }) => ({
       ...m,
+      phaseType,
       homeTeam: m.homeTeamId ? (teamMap.get(m.homeTeamId) ?? null) : null,
       awayTeam: m.awayTeamId ? (teamMap.get(m.awayTeamId) ?? null) : null,
     }));
@@ -105,7 +109,9 @@ export default async function HomePage() {
         .where(and(eq(predictions.tournamentId, tournament.id), eq(predictions.userId, session.id)));
 
       const tipped = new Set(userPreds.map((p) => p.matchId));
-      pendingCount = soon.filter((m) => !tipped.has(m.id)).length;
+      const pending = soon.filter((m) => !tipped.has(m.id));
+      pendingCount = pending.length;
+      if (pending[0]?.phaseType === "knockout") pendingLink = "knockout";
     }
 
     const [knockoutPhase] = await db
@@ -171,7 +177,7 @@ export default async function HomePage() {
                   ⚠️ Du har {pendingCount} match{pendingCount !== 1 ? "er" : ""} att tippa de närmaste 24 timmarna!
                 </span>
                 <Link
-                  href={`/tournament/${tournament.id}/group`}
+                  href={`/tournament/${tournament.id}/${pendingLink}`}
                   className="block text-sm text-amber-600 dark:text-amber-400 hover:underline mt-1"
                 >
                   Tippa nu →
