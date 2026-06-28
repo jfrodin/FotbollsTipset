@@ -11,6 +11,7 @@ import {
   fetchTopAssists,
   fetchTopYellowCards,
   fetchTopRedCards,
+  fetchFixtures,
   type ApiFootballStandingEntry,
 } from "@/lib/football-api/api-football";
 import { TournamentInfo } from "@/components/TournamentInfo";
@@ -19,29 +20,26 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
-// VM 2026 Round of 32 – korrekt bracket baserad på FIFA-lottningen december 2024
-// Vänster halva (matcher 73-80), höger halva (matcher 81-88)
-// Källor: Wikipedia / FIFA / Sky Sports
-// "3rd" = bästa treor (position avgörs av vilka grupper som kvalificerar en 3:a)
-// VM 2026 Round of 32 – korrekt bracket baserad på FIFA-lottningen december 2024
-// Källor: Wikipedia / FIFA / Sky Sports
-const VM2026_BRACKET: [string, string, string?, string?][] = [
+// VM 2026 Round of 32 – bracket-struktur baserad på FIFA-lottningen december 2024
+// Källor: Wikipedia / Sky Sports. "3rd-XXXXX" matchas mot riktig fixture via lag-ID,
+// vi gissar aldrig vilket lag det blir - det avgörs av den riktiga matchen från API:t.
+const VM2026_BRACKET: [string, string][] = [
   // Vänster halva (top → botten)
   ["A2", "B2"],
   ["F1", "C2"],
-  ["E1", "3rd-ABCDF"],   // M74 – E1 vs bästa 3:a från grupp A/B/C/D/F
-  ["I1", "3rd-CDFGH"],   // M77 – I1 vs bästa 3:a från grupp C/D/F/G/H
+  ["E1", "3rd-ABCDF"],
+  ["I1", "3rd-CDFGH"],
   ["C1", "F2"],
   ["E2", "I2"],
-  ["A1", "3rd-CEFHI"],   // M79 – A1 (Mexiko) vs bästa 3:a från grupp C/E/F/H/I
-  ["L1", "3rd-EHIJK"],   // M80 – L1 vs bästa 3:a från grupp E/H/I/J/K
+  ["A1", "3rd-CEFHI"],
+  ["L1", "3rd-EHIJK"],
   // Höger halva (top → botten)
-  ["D1", "3rd-BEFIJ"],   // M81 – D1 (USA) vs bästa 3:a från grupp B/E/F/I/J
-  ["G1", "3rd-AEHIJ"],   // M82 – G1 vs bästa 3:a från grupp A/E/H/I/J
+  ["D1", "3rd-BEFIJ"],
+  ["G1", "3rd-AEHIJ"],
   ["K2", "L2"],
   ["H1", "J2"],
-  ["B1", "3rd-EFGIJ"],   // M85 – B1 (Kanada) vs bästa 3:a från grupp E/F/G/I/J
-  ["K1", "3rd-DEIJL"],   // M87 – K1 vs bästa 3:a från grupp D/E/I/J/L
+  ["B1", "3rd-EFGIJ"],
+  ["K1", "3rd-DEIJL"],
   ["J1", "H2"],
   ["D2", "G2"],
 ];
@@ -86,13 +84,17 @@ export default async function StandingsPage({ params }: Props) {
   if (!tournament) redirect("/");
 
   // Fetch all data in parallel
-  const [standingsData, topScorers, topAssists, topYellow, topRed] = await Promise.allSettled([
+  const [standingsData, topScorers, topAssists, topYellow, topRed, fixturesData] = await Promise.allSettled([
     tournament.externalId ? fetchStandings(tournament.externalId, tournament.year) : Promise.resolve([]),
     tournament.externalId ? fetchTopScorers(tournament.externalId, tournament.year) : Promise.resolve([]),
     tournament.externalId ? fetchTopAssists(tournament.externalId, tournament.year) : Promise.resolve([]),
     tournament.externalId ? fetchTopYellowCards(tournament.externalId, tournament.year) : Promise.resolve([]),
     tournament.externalId ? fetchTopRedCards(tournament.externalId, tournament.year) : Promise.resolve([]),
+    tournament.externalId ? fetchFixtures(tournament.externalId, tournament.year) : Promise.resolve([]),
   ]);
+
+  const allFixtures = fixturesData.status === "fulfilled" ? fixturesData.value : [];
+  const r32Fixtures = allFixtures.filter((f) => f.league.round === "Round of 32");
 
   const standings = standingsData.status === "fulfilled" ? standingsData.value : [];
   const rawStandings = standings[0]?.league?.standings ?? [];
@@ -135,55 +137,43 @@ export default async function StandingsPage({ params }: Props) {
     return a.name.localeCompare(b.name);
   });
 
-  // Build bracket from current standings
-  const positionMap = new Map<string, { id: number; name: string; logo: string }>();
-  const MATCHES_PER_TEAM = 3;
-
-  // Ett lag visas i bracket-positionen bara om gruppen är helt klar, eller om
-  // inget lag under dem i tabellen matematiskt kan ta igen deras poäng (klinchat)
-  function isPositionClinched(entries: ApiFootballStandingEntry[], idx: number): boolean {
-    const team = entries[idx];
-    if (!team) return false;
-    const allFinished = entries.every((e) => e.all.played >= MATCHES_PER_TEAM);
-    if (allFinished) return true;
-    // entries är redan sorterad efter nuvarande placering (poäng/målskillnad/inbördes möten).
-    // Om ett hotande lag i bästa fall bara kan nå SAMMA poäng (inte fler) och vårt lag redan
-    // ligger före dem just nu, har de redan förlorat den tiebreakern (t.ex. inbördes möte)
-    // – då räknar vi platsen som klinchad.
-    return entries.slice(idx + 1).every((e) => {
-      const maxPoints = e.points + (MATCHES_PER_TEAM - e.all.played) * 3;
-      return maxPoints <= team.points;
-    });
-  }
-
+  // teamId → grupposition (t.ex. "A1", "B2") från de riktiga gruppställningarna
+  const positionToTeamId = new Map<string, number>();
   for (const group of groups) {
     if (group.isThird) continue;
     const letter = group.name.replace(/^Group\s+/i, "").replace(/^Group Stage\s*-\s*Group\s+/i, "");
-    group.entries.forEach((entry, idx) => {
-      if (entry.rank > 2) return;
-      if (isPositionClinched(group.entries, idx)) {
-        positionMap.set(`${letter}${entry.rank}`, entry.team);
-      }
+    for (const entry of group.entries) {
+      if (entry.rank <= 2) positionToTeamId.set(`${letter}${entry.rank}`, entry.team.id);
+    }
+  }
+
+  // Matcha varje bracket-slot mot en riktig R32-fixture via lag-ID. Vi gissar aldrig
+  // vilket lag som blir "bästa 3:a" – det laget kommer direkt från den riktiga matchen.
+  function findFixtureFor(posA: string, posB: string) {
+    const teamIdA = positionToTeamId.get(posA);
+    const teamIdB = positionToTeamId.get(posB);
+    return r32Fixtures.find((f) => {
+      const homeId = f.teams.home.id;
+      const awayId = f.teams.away.id;
+      const matchesA = teamIdA !== undefined && (homeId === teamIdA || awayId === teamIdA);
+      const matchesB = teamIdB !== undefined && (homeId === teamIdB || awayId === teamIdB);
+      return matchesA || matchesB;
     });
   }
 
-  // OBS: vilket 3:e-placerat lag som hamnar i vilken slot avgörs av FIFA:s officiella
-  // kombinationstabell (beroende på vilka 8 av 12 grupper som kvalificerar en trea).
-  // Vi har inte den tabellen och gissar inte – visar bara platsen tills riktiga
-  // slutspelsfixturer dyker upp i API:t.
-  function resolveSlot(key: string): { label: string; team: { name: string; logo: string } | null } {
-    if (!key.startsWith("3rd-")) {
-      return { label: key, team: positionMap.get(key) ?? null };
+  const bracket = VM2026_BRACKET.map(([posA, posB]) => {
+    const fixture = findFixtureFor(posA, posB);
+    if (!fixture) {
+      return {
+        home: { label: posA, team: null },
+        away: { label: posB, team: null },
+      };
     }
-    const letters = key.replace("3rd-", "");
-    const label = `Bästa 3:a (${letters.split("").join("/")})`;
-    return { label, team: null };
-  }
-
-  const bracket = VM2026_BRACKET.map(([h, a]) => ({
-    home: resolveSlot(h),
-    away: resolveSlot(a),
-  }));
+    return {
+      home: { label: posA, team: fixture.teams.home },
+      away: { label: posB, team: fixture.teams.away },
+    };
+  });
 
   return (
     <>
