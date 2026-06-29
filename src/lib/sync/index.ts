@@ -109,13 +109,14 @@ export async function syncTournament(tournamentId: string): Promise<SyncResult> 
       const roundName = fixture.league.round;
       const phaseType = roundToPhaseType(roundName);
 
-      // Find or create phase
+      // Find or create phase. Alla slutspelsomgångar (R32, R16, kvarts, semi, final) delar
+      // en gemensam "Slutspel"-fas, precis som gruppspelets 3 omgångar delar "Gruppspel".
       let phase = existingPhases.find(
-        (p) => p.type === phaseType && (phaseType === "group" ? p.name === "Gruppspel" : p.name === roundName)
+        (p) => p.type === phaseType && (phaseType === "group" ? p.name === "Gruppspel" : p.name === "Slutspel")
       );
 
       if (!phase) {
-        const phaseName = phaseType === "group" ? "Gruppspel" : roundName;
+        const phaseName = phaseType === "group" ? "Gruppspel" : "Slutspel";
         const [newPhase] = await db
           .insert(phases)
           .values({

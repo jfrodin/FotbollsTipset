@@ -16,9 +16,6 @@ type Slot = { label: string; team: Team | null };
 export type BracketMatchData = { home: Slot; away: Slot };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-const tbd  = (label = "TBD"): Slot => ({ label, team: null });
-const tbdM = (): BracketMatchData => ({ home: tbd(), away: tbd() });
-
 // Center Y position for match at [round, index] within a half
 function cy(round: number, idx: number): number {
   const span = 1 << round; // slots this match occupies (2^round)
@@ -115,33 +112,40 @@ function SFtoFinal() {
 }
 
 // ─── Main Bracket ─────────────────────────────────────────────────────────────
-export function Bracket({ r32Matches }: { r32Matches: BracketMatchData[] }) {
+interface BracketProps {
+  r32Matches: BracketMatchData[];
+  r16Matches: BracketMatchData[];
+  qfMatches: BracketMatchData[];
+  sfMatches: BracketMatchData[];
+  finalMatch: BracketMatchData;
+}
+
+export function Bracket({ r32Matches, r16Matches, qfMatches, sfMatches, finalMatch }: BracketProps) {
   const leftR32  = r32Matches.slice(0, 8);
   const rightR32 = r32Matches.slice(8, 16);
 
-  const r16 = Array(4).fill(null).map(tbdM);
-  const qf  = Array(2).fill(null).map(tbdM);
-  const sf  = [tbdM()];
-  const fin: BracketMatchData = {
-    home: tbd("Vinnare SF 1"),
-    away: tbd("Vinnare SF 2"),
-  };
+  const leftR16 = r16Matches.slice(0, 4);
+  const rightR16 = r16Matches.slice(4, 8);
+  const leftQf = qfMatches.slice(0, 2);
+  const rightQf = qfMatches.slice(2, 4);
+  const leftSf = sfMatches.slice(0, 1);
+  const rightSf = sfMatches.slice(1, 2);
 
   return (
     <div className="overflow-x-auto -mx-4 px-4 pb-4">
       <p className="text-xs text-gray-400 mb-4">
-        Visar nuläget i grupperna – uppdateras efter varje resultat.
+        Visar bekräftade matcher från turneringen – uppdateras automatiskt efter varje resultat.
       </p>
       <div className="inline-flex items-start pt-10">
 
         {/* ── LEFT HALF: R32 → R16 → QF → SF ── */}
         <Col matches={leftR32} round={0} label="Sextondelar" />
         <ConnSVG fromRound={0} count={8} />
-        <Col matches={r16}     round={1} label="Åttondelar" />
+        <Col matches={leftR16} round={1} label="Åttondelar" />
         <ConnSVG fromRound={1} count={4} />
-        <Col matches={qf}      round={2} label="Kvartsfinaler" />
+        <Col matches={leftQf}  round={2} label="Kvartsfinaler" />
         <ConnSVG fromRound={2} count={2} />
-        <Col matches={sf}      round={3} label="Semifinal" />
+        <Col matches={leftSf}  round={3} label="Semifinal" />
         <SFtoFinal />
 
         {/* ── FINAL ── */}
@@ -150,17 +154,17 @@ export function Bracket({ r32Matches }: { r32Matches: BracketMatchData[] }) {
             🏆 Final
           </div>
           <div className="absolute w-full" style={{ top: HALF_H / 2 - CARD_H / 2 }}>
-            <MatchCard match={fin} highlight />
+            <MatchCard match={finalMatch} highlight />
           </div>
         </div>
 
         {/* ── RIGHT HALF: SF → QF → R16 → R32 ── */}
         <SFtoFinal />
-        <Col matches={sf}       round={3} label="Semifinal" />
+        <Col matches={rightSf}  round={3} label="Semifinal" />
         <ConnSVG fromRound={2} count={2} flip />
-        <Col matches={qf}       round={2} label="Kvartsfinaler" />
+        <Col matches={rightQf}  round={2} label="Kvartsfinaler" />
         <ConnSVG fromRound={1} count={4} flip />
-        <Col matches={r16}      round={1} label="Åttondelar" />
+        <Col matches={rightR16} round={1} label="Åttondelar" />
         <ConnSVG fromRound={0} count={8} flip />
         <Col matches={rightR32} round={0} label="Sextondelar" />
 

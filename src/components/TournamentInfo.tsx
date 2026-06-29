@@ -38,7 +38,11 @@ interface Props {
   topAssists: PlayerStat[];
   topYellow: PlayerStat[];
   topRed: PlayerStat[];
-  bracket: BracketMatchData[];
+  r32Matches: BracketMatchData[];
+  r16Matches: BracketMatchData[];
+  qfMatches: BracketMatchData[];
+  sfMatches: BracketMatchData[];
+  finalMatch: BracketMatchData;
 }
 
 type Tab = "grupper" | "slutspel" | "statistik";
@@ -87,7 +91,7 @@ function StatList({ players, valueKey, label }: {
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export function TournamentInfo({ groups, topScorers, topAssists, topYellow, topRed, bracket }: Props) {
+export function TournamentInfo({ groups, topScorers, topAssists, topYellow, topRed, r32Matches, r16Matches, qfMatches, sfMatches, finalMatch }: Props) {
   const [tab, setTab] = useState<Tab>("grupper");
   const [statTab, setStatTab] = useState<StatTab>("mal");
 
@@ -177,7 +181,7 @@ export function TournamentInfo({ groups, topScorers, topAssists, topYellow, topR
 
       {/* Slutspel */}
       {tab === "slutspel" && (
-        <Bracket r32Matches={bracket} />
+        <Bracket r32Matches={r32Matches} r16Matches={r16Matches} qfMatches={qfMatches} sfMatches={sfMatches} finalMatch={finalMatch} />
       )}
 
       {/* Statistik */}

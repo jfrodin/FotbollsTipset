@@ -16,8 +16,8 @@ export interface ApiFootballFixture {
     season: number;
   };
   teams: {
-    home: { id: number; name: string; logo: string };
-    away: { id: number; name: string; logo: string };
+    home: { id: number; name: string; logo: string; winner: boolean | null };
+    away: { id: number; name: string; logo: string; winner: boolean | null };
   };
   goals: {
     home: number | null;

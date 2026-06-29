@@ -20,29 +20,44 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
-// VM 2026 Round of 32 – bracket-struktur baserad på FIFA-lottningen december 2024
-// Källor: Wikipedia / Sky Sports. "3rd-XXXXX" matchas mot riktig fixture via lag-ID,
-// vi gissar aldrig vilket lag det blir - det avgörs av den riktiga matchen från API:t.
-const VM2026_BRACKET: [string, string][] = [
+// VM 2026 slutspelsstruktur baserad på FIFA-lottningen december 2024 (Wikipedia/Sky Sports).
+// Varje R32-slot har sitt officiella matchnummer (M73-M88), och vi vet exakt vilka
+// matchnummer som möts i nästa runda (R16/QF/SF/Final) – inget gissande om det.
+// "3rd-XXXXX" matchas mot riktig fixture via lag-ID; vilket lag det blir avgörs alltid
+// av den riktiga matchen från API:t, aldrig av oss.
+const VM2026_R32: { num: number; home: string; away: string }[] = [
   // Vänster halva (top → botten)
-  ["A2", "B2"],
-  ["F1", "C2"],
-  ["E1", "3rd-ABCDF"],
-  ["I1", "3rd-CDFGH"],
-  ["C1", "F2"],
-  ["E2", "I2"],
-  ["A1", "3rd-CEFHI"],
-  ["L1", "3rd-EHIJK"],
+  { num: 73, home: "A2", away: "B2" },
+  { num: 75, home: "F1", away: "C2" },
+  { num: 74, home: "E1", away: "3rd-ABCDF" },
+  { num: 77, home: "I1", away: "3rd-CDFGH" },
+  { num: 76, home: "C1", away: "F2" },
+  { num: 78, home: "E2", away: "I2" },
+  { num: 79, home: "A1", away: "3rd-CEFHI" },
+  { num: 80, home: "L1", away: "3rd-EHIJK" },
   // Höger halva (top → botten)
-  ["D1", "3rd-BEFIJ"],
-  ["G1", "3rd-AEHIJ"],
-  ["K2", "L2"],
-  ["H1", "J2"],
-  ["B1", "3rd-EFGIJ"],
-  ["K1", "3rd-DEIJL"],
-  ["J1", "H2"],
-  ["D2", "G2"],
+  { num: 81, home: "D1", away: "3rd-BEFIJ" },
+  { num: 82, home: "G1", away: "3rd-AEHIJ" },
+  { num: 83, home: "K2", away: "L2" },
+  { num: 84, home: "H1", away: "J2" },
+  { num: 85, home: "B1", away: "3rd-EFGIJ" },
+  { num: 87, home: "K1", away: "3rd-DEIJL" },
+  { num: 86, home: "J1", away: "H2" },
+  { num: 88, home: "D2", away: "G2" },
 ];
+
+// [eget matchnummer, matchnummer A, matchnummer B] – vinnaren av A möter vinnaren av B
+const R16_PAIRS: [number, number, number][] = [
+  [89, 74, 77], [90, 73, 75], [91, 76, 78], [92, 79, 80],
+  [93, 83, 84], [94, 81, 82], [95, 86, 88], [96, 85, 87],
+];
+const QF_PAIRS: [number, number, number][] = [
+  [97, 89, 90], [98, 91, 92], [99, 93, 94], [100, 95, 96],
+];
+const SF_PAIRS: [number, number, number][] = [
+  [101, 97, 98], [102, 99, 100],
+];
+const FINAL_PAIR: [number, number, number] = [103, 101, 102];
 
 function toSwedishGroup(name: string, size?: number): string {
   if (!name) return name;
@@ -147,8 +162,8 @@ export default async function StandingsPage({ params }: Props) {
     }
   }
 
-  // Matcha varje bracket-slot mot en riktig R32-fixture via lag-ID. Vi gissar aldrig
-  // vilket lag som blir "bästa 3:a" – det laget kommer direkt från den riktiga matchen.
+  // Matcha varje R32-slot mot en riktig fixture via lag-ID. Vi gissar aldrig vilket lag
+  // som blir "bästa 3:a" – det laget kommer direkt från den riktiga matchen.
   function findFixtureFor(posA: string, posB: string) {
     const teamIdA = positionToTeamId.get(posA);
     const teamIdB = positionToTeamId.get(posB);
@@ -161,19 +176,75 @@ export default async function StandingsPage({ params }: Props) {
     });
   }
 
-  const bracket = VM2026_BRACKET.map(([posA, posB]) => {
-    const fixture = findFixtureFor(posA, posB);
-    if (!fixture) {
-      return {
-        home: { label: posA, team: null },
-        away: { label: posB, team: null },
-      };
+  type BTeam = { id: number; name: string; logo: string };
+  type BResult = { home: BTeam | null; away: BTeam | null; winner: BTeam | null };
+
+  function winnerOf(fixture: (typeof allFixtures)[number]): BTeam | null {
+    if (fixture.teams.home.winner === true) return fixture.teams.home;
+    if (fixture.teams.away.winner === true) return fixture.teams.away;
+    return null;
+  }
+
+  // Hitta en riktig fixture i en given omgång som innehåller ett av de två angivna lagen
+  function findRealFixture(roundName: string, teamA: BTeam | null, teamB: BTeam | null) {
+    if (!teamA && !teamB) return null;
+    return allFixtures.find((f) => {
+      if (f.league.round !== roundName) return false;
+      const homeId = f.teams.home.id;
+      const awayId = f.teams.away.id;
+      return (teamA && (homeId === teamA.id || awayId === teamA.id)) ||
+             (teamB && (homeId === teamB.id || awayId === teamB.id));
+    }) ?? null;
+  }
+
+  const resultByNum = new Map<number, BResult>();
+
+  for (const slot of VM2026_R32) {
+    const fixture = findFixtureFor(slot.home, slot.away);
+    resultByNum.set(slot.num, fixture
+      ? { home: fixture.teams.home, away: fixture.teams.away, winner: winnerOf(fixture) }
+      : { home: null, away: null, winner: null });
+  }
+
+  // Bygg nästa runda utifrån vinnarna av föregående matchnummer (förbestämd koppling,
+  // t.ex. M89 = vinnare M74 möter vinnare M77). Om den riktiga fixturen redan finns i
+  // API:t (omgången har börjat) använder vi den datan istället – aldrig en gissning.
+  function buildRound(pairs: [number, number, number][], roundName: string) {
+    for (const [num, fromA, fromB] of pairs) {
+      const teamA = resultByNum.get(fromA)?.winner ?? null;
+      const teamB = resultByNum.get(fromB)?.winner ?? null;
+      const realFixture = findRealFixture(roundName, teamA, teamB);
+      resultByNum.set(num, realFixture
+        ? { home: realFixture.teams.home, away: realFixture.teams.away, winner: winnerOf(realFixture) }
+        : { home: teamA, away: teamB, winner: null });
     }
+  }
+  buildRound(R16_PAIRS, "Round of 16");
+  buildRound(QF_PAIRS, "Quarter-finals");
+  buildRound(SF_PAIRS, "Semi-finals");
+  buildRound([FINAL_PAIR], "Final");
+
+  const r32Matches = VM2026_R32.map((slot) => {
+    const r = resultByNum.get(slot.num);
     return {
-      home: { label: posA, team: fixture.teams.home },
-      away: { label: posB, team: fixture.teams.away },
+      home: { label: slot.home, team: r?.home ?? null },
+      away: { label: slot.away, team: r?.away ?? null },
     };
   });
+
+  function progressMatches(pairs: [number, number, number][]) {
+    return pairs.map(([num]) => {
+      const r = resultByNum.get(num);
+      return {
+        home: { label: "TBD", team: r?.home ?? null },
+        away: { label: "TBD", team: r?.away ?? null },
+      };
+    });
+  }
+  const r16Matches = progressMatches(R16_PAIRS);
+  const qfMatches = progressMatches(QF_PAIRS);
+  const sfMatches = progressMatches(SF_PAIRS);
+  const finalMatch = progressMatches([FINAL_PAIR])[0];
 
   return (
     <>
@@ -193,7 +264,11 @@ export default async function StandingsPage({ params }: Props) {
           topAssists={topAssists.status === "fulfilled" ? topAssists.value : []}
           topYellow={topYellow.status === "fulfilled" ? topYellow.value : []}
           topRed={topRed.status === "fulfilled" ? topRed.value : []}
-          bracket={bracket}
+          r32Matches={r32Matches}
+          r16Matches={r16Matches}
+          qfMatches={qfMatches}
+          sfMatches={sfMatches}
+          finalMatch={finalMatch}
         />
       </main>
     </>
