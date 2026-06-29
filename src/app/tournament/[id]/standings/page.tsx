@@ -46,10 +46,12 @@ const VM2026_R32: { num: number; home: string; away: string }[] = [
   { num: 88, home: "D2", away: "G2" },
 ];
 
-// [eget matchnummer, matchnummer A, matchnummer B] – vinnaren av A möter vinnaren av B
+// [eget matchnummer, matchnummer A, matchnummer B] – vinnaren av A möter vinnaren av B.
+// Ordningen i arrayen MÅSTE matcha den visuella paringen av VM2026_R32 (par 0+1, 2+3, osv)
+// – inte FIFA:s officiella matchnummerordning, annars hamnar fel lag i fel ruta i trädet.
 const R16_PAIRS: [number, number, number][] = [
-  [89, 74, 77], [90, 73, 75], [91, 76, 78], [92, 79, 80],
-  [93, 83, 84], [94, 81, 82], [95, 86, 88], [96, 85, 87],
+  [90, 73, 75], [89, 74, 77], [91, 76, 78], [92, 79, 80],
+  [94, 81, 82], [93, 83, 84], [96, 85, 87], [95, 86, 88],
 ];
 const QF_PAIRS: [number, number, number][] = [
   [97, 89, 90], [98, 91, 92], [99, 93, 94], [100, 95, 96],
