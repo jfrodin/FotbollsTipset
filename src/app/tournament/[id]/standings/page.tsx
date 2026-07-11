@@ -25,21 +25,25 @@ interface Props {
 // matchnummer som möts i nästa runda (R16/QF/SF/Final) – inget gissande om det.
 // "3rd-XXXXX" matchas mot riktig fixture via lag-ID; vilket lag det blir avgörs alltid
 // av den riktiga matchen från API:t, aldrig av oss.
+// Halvorna nedan är verifierade mot de faktiska SF-matcherna 2026 (Frankrike–Spanien resp.
+// Norge/England–Argentina/Schweiz), INTE mot Wikipedias visuella "vänster/höger"-gissning
+// som visade sig fel. M99 (Spanien/Belgien) hör ihop med M97 (Frankrike/Marocko) i samma
+// halva – inte med M100 – annars hamnar rätt lag i fel del av trädet i SF.
 const VM2026_R32: { num: number; home: string; away: string }[] = [
-  // Vänster halva (top → botten)
+  // Vänster halva → SF 101 (M97+M99-grenen)
   { num: 73, home: "A2", away: "B2" },
   { num: 75, home: "F1", away: "C2" },
   { num: 74, home: "E1", away: "3rd-ABCDF" },
   { num: 77, home: "I1", away: "3rd-CDFGH" },
-  { num: 76, home: "C1", away: "F2" },
-  { num: 78, home: "E2", away: "I2" },
-  { num: 79, home: "A1", away: "3rd-CEFHI" },
-  { num: 80, home: "L1", away: "3rd-EHIJK" },
-  // Höger halva (top → botten)
   { num: 81, home: "D1", away: "3rd-BEFIJ" },
   { num: 82, home: "G1", away: "3rd-AEHIJ" },
   { num: 83, home: "K2", away: "L2" },
   { num: 84, home: "H1", away: "J2" },
+  // Höger halva → SF 102 (M98+M100-grenen)
+  { num: 76, home: "C1", away: "F2" },
+  { num: 78, home: "E2", away: "I2" },
+  { num: 79, home: "A1", away: "3rd-CEFHI" },
+  { num: 80, home: "L1", away: "3rd-EHIJK" },
   { num: 85, home: "B1", away: "3rd-EFGIJ" },
   { num: 87, home: "K1", away: "3rd-DEIJL" },
   { num: 86, home: "J1", away: "H2" },
@@ -50,14 +54,14 @@ const VM2026_R32: { num: number; home: string; away: string }[] = [
 // Ordningen i arrayen MÅSTE matcha den visuella paringen av VM2026_R32 (par 0+1, 2+3, osv)
 // – inte FIFA:s officiella matchnummerordning, annars hamnar fel lag i fel ruta i trädet.
 const R16_PAIRS: [number, number, number][] = [
-  [90, 73, 75], [89, 74, 77], [91, 76, 78], [92, 79, 80],
-  [94, 81, 82], [93, 83, 84], [96, 85, 87], [95, 86, 88],
+  [90, 73, 75], [89, 74, 77], [94, 81, 82], [93, 83, 84],
+  [91, 76, 78], [92, 79, 80], [96, 85, 87], [95, 86, 88],
 ];
 const QF_PAIRS: [number, number, number][] = [
-  [97, 89, 90], [98, 91, 92], [99, 93, 94], [100, 95, 96],
+  [97, 89, 90], [99, 93, 94], [98, 91, 92], [100, 95, 96],
 ];
 const SF_PAIRS: [number, number, number][] = [
-  [101, 97, 98], [102, 99, 100],
+  [101, 97, 99], [102, 98, 100],
 ];
 const FINAL_PAIR: [number, number, number] = [103, 101, 102];
 
@@ -187,15 +191,21 @@ export default async function StandingsPage({ params }: Props) {
     return null;
   }
 
-  // Hitta en riktig fixture i en given omgång som innehåller ett av de två angivna lagen
+  // Hitta en riktig fixture i en given omgång.
+  // Om BÅDA lagen är kända krävs att BÅDA matchar (AND) – annars kan samma fixture
+  // hamna i två olika bracket-slots (t.ex. Spanien-Frankrike på bägge sidor).
   function findRealFixture(roundName: string, teamA: BTeam | null, teamB: BTeam | null) {
     if (!teamA && !teamB) return null;
     return allFixtures.find((f) => {
       if (f.league.round !== roundName) return false;
       const homeId = f.teams.home.id;
       const awayId = f.teams.away.id;
-      return (teamA && (homeId === teamA.id || awayId === teamA.id)) ||
-             (teamB && (homeId === teamB.id || awayId === teamB.id));
+      if (teamA && teamB) {
+        return (homeId === teamA.id || awayId === teamA.id) &&
+               (homeId === teamB.id || awayId === teamB.id);
+      }
+      if (teamA) return homeId === teamA.id || awayId === teamA.id;
+      return homeId === teamB!.id || awayId === teamB!.id;
     }) ?? null;
   }
 
